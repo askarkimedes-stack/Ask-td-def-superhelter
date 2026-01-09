@@ -2,190 +2,6 @@
 <html lang="no">
 <head>
     <meta charset="UTF-8">
-    <title>Superhelt Tower Defense</title>
-    <style>
-        body { font-family: sans-serif; background: #2c3e50; color: white; display: flex; flex-direction: column; align-items: center; }
-        canvas { background: #27ae60; border: 5px solid #2ecc71; cursor: crosshair; }
-        .stats { margin: 10px; font-size: 20px; font-weight: bold; }
-        .instructions { font-size: 14px; color: #ecf0f1; margin-bottom: 5px; }
-    </style>
-</head>
-<body>
-
-    <h1>Superhelt Tower Defense</h1>
-    <div class="instructions">Klikk på gresset for å plassere en helt (Kostnad: 50 gull)</div>
-    <div class="stats">Gull: <span id="gold">100</span> | Liv: <span id="lives">10</span></div>
-    <canvas id="gameCanvas" width="800" height="400"></canvas>
-
-<script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const goldEl = document.getElementById('gold');
-const livesEl = document.getElementById('lives');
-
-// Spillinnstillinger
-let gold = 100;
-let lives = 10;
-const heroes = [];
-const enemies = [];
-const projectiles = [];
-const path = [
-    {x: -50, y: 200},
-    {x: 850, y: 200}
-];
-
-// Tegn stien
-function drawPath() {
-    ctx.fillStyle = '#95a5a6';
-    ctx.fillRect(0, 175, 800, 50);
-}
-
-// Klasse for Superhelt (Tårn)
-class Hero {
-    constructor(x, y) {
-        this.x = x;
-        this.y = y;
-        this.range = 120;
-        this.cooldown = 0;
-    }
-    draw() {
-        ctx.fillStyle = '#e74c3c'; // Rød drakt
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, 20, 0, Math.PI * 2);
-        ctx.fill();
-        // Tegn kappe
-        ctx.fillStyle = '#f1c40f';
-        ctx.fillRect(this.x - 25, this.y, 10, 15);
-    }
-    update() {
-        if (this.cooldown > 0) this.cooldown--;
-        
-        // Finn fiender i nærheten
-        enemies.forEach(enemy => {
-            let dist = Math.hypot(enemy.x - this.x, enemy.y - this.y);
-            if (dist < this.range && this.cooldown === 0) {
-                projectiles.push(new Projectile(this.x, this.y, enemy));
-                this.cooldown = 30; // Skytehastighet
-            }
-        });
-    }
-}
-
-// Klasse for Skurk (Fiende)
-class Enemy {
-    constructor() {
-        this.x = path[0].x;
-        this.y = path[0].y;
-        this.speed = 1.5 + Math.random();
-        this.health = 3;
-        this.radius = 15;
-    }
-    draw() {
-        ctx.fillStyle = '#2c3e50'; // Mørk skurk
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fill();
-    }
-    update() {
-        this.x += this.speed;
-    }
-}
-
-// Klasse for Prosjektil (Laser)
-class Projectile {
-    constructor(x, y, target) {
-        this.x = x;
-        this.y = y;
-        this.target = target;
-        this.speed = 7;
-    }
-    draw() {
-        ctx.strokeStyle = '#f1c40f';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(this.x, this.y);
-        ctx.lineTo(this.target.x, this.target.y);
-        ctx.stroke();
-    }
-}
-
-// Håndter klikk for å plassere helt
-canvas.addEventListener('mousedown', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    // Sjekk om det er på gresset og om vi har nok gull
-    if ((y < 150 || y > 250) && gold >= 50) {
-        heroes.push(new Hero(x, y));
-        gold -= 50;
-        goldEl.innerText = gold;
-    }
-});
-
-// Spill-løkke
-function animate() {
-    if (lives <= 0) {
-        alert("Game Over! Skurkene vant.");
-        location.reload();
-        return;
-    }
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawPath();
-
-    // Spawn fiender
-    if (Math.random() < 0.02) enemies.push(new Enemy());
-
-    // Oppdater helter
-    heroes.forEach(h => {
-        h.draw();
-        h.update();
-    });
-
-    // Oppdater fiender
-    for (let i = enemies.length - 1; i >= 0; i--) {
-        let e = enemies[i];
-        e.update();
-        e.draw();
-
-        // Fiende når slutten
-        if (e.x > canvas.width) {
-            enemies.splice(i, 1);
-            lives--;
-            livesEl.innerText = lives;
-        }
-    }
-
-    // Oppdater prosjektiler (lasere forsvinner raskt)
-    for (let i = projectiles.length - 1; i >= 0; i--) {
-        let p = projectiles[i];
-        p.draw();
-        
-        // Treff-logikk
-        p.target.health--;
-        if (p.target.health <= 0) {
-            let index = enemies.indexOf(p.target);
-            if (index > -1) {
-                enemies.splice(index, 1);
-                gold += 10;
-                goldEl.innerText = gold;
-            }
-        }
-        projectiles.splice(i, 1); // Fjern laseren etter ett bilde (frame)
-    }
-
-    requestAnimationFrame(animate);
-}
-
-animate();
-</script>
-</body>
-</html
-    <!DOCTYPE html>
-<html lang="no">
-<head>
-    <meta charset="UTF-8">
     <title>Superhelt TD - Svingete Vei</title>
     <style>
         body {
@@ -386,4 +202,245 @@ class Hero {
             let dist = Math.hypot(enemy.x - this.x, enemy.y - this.y);
             if (dist < this.range) {
                 target = enemy;
-                break; // Skyt på den første vi finner (oftest den som kom
+                break; // Skyt på den første vi finner (oftest den som kom først)
+            }
+        }
+
+        if (target && this.cooldown <= 0) {
+            projectiles.push(new Projectile(this.x, this.y, target, this.type, this));
+            this.cooldown = this.fireRate;
+        }
+    }
+}
+
+class Enemy {
+    constructor() {
+        this.wpIndex = 0; // Hvilket waypoint går vi mot
+        this.x = waypoints[0].x;
+        this.y = waypoints[0].y;
+        this.speed = 1 + Math.random(); // Variert fart
+        this.radius = 12;
+        this.health = 5 + Math.floor(frameCount / 1000); // Blir vanskeligere over tid
+        this.maxHealth = this.health;
+    }
+
+    draw() {
+        ctx.fillStyle = '#2c3e50';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Helsebar
+        ctx.fillStyle = 'red';
+        ctx.fillRect(this.x - 10, this.y - 20, 20, 4);
+        ctx.fillStyle = '#2ecc71';
+        ctx.fillRect(this.x - 10, this.y - 20, 20 * (this.health / this.maxHealth), 4);
+    }
+
+    update() {
+        // Logikk for å følge veien
+        let target = waypoints[this.wpIndex + 1];
+        if (!target) return; // Ferdig med veien
+
+        let dx = target.x - this.x;
+        let dy = target.y - this.y;
+        let dist = Math.hypot(dx, dy);
+
+        if (dist < 5) {
+            this.wpIndex++; // Nådde punktet, gå til neste
+        } else {
+            // Normaliser og flytt
+            this.x += (dx / dist) * this.speed;
+            this.y += (dy / dist) * this.speed;
+        }
+    }
+}
+
+class Projectile {
+    constructor(x, y, target, type, owner) {
+        this.x = x;
+        this.y = y;
+        this.startX = x;
+        this.startY = y;
+        this.target = target;
+        this.type = type;
+        this.owner = owner; // Hvem skjøt?
+        this.active = true;
+        this.hitList = []; // For boomerang: husk hvem vi har truffet så vi ikke treffer samme 100 ganger
+        
+        if (type === 'laser') {
+            this.speed = 8;
+            this.damage = 2;
+        } else {
+            // Boomerang stats
+            this.speed = 5;
+            this.damage = 3;
+            this.returning = false; // Er den på vei tilbake?
+            this.maxDist = 200; // Hvor langt ut den flyr
+            
+            // Beregn vinkel mot målet når den blir skutt
+            let angle = Math.atan2(target.y - y, target.x - x);
+            this.vx = Math.cos(angle) * this.speed;
+            this.vy = Math.sin(angle) * this.speed;
+        }
+    }
+
+    draw() {
+        ctx.beginPath();
+        if (this.type === 'laser') {
+            ctx.fillStyle = '#e74c3c';
+            ctx.arc(this.x, this.y, 4, 0, Math.PI * 2);
+        } else {
+            ctx.fillStyle = '#9b59b6';
+            // Roterende effekt (visuell)
+            let angle = frameCount * 0.5;
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(angle);
+            ctx.fillRect(-6, -2, 12, 4);
+            ctx.fillRect(-2, -6, 4, 12);
+            ctx.restore();
+            return; // Siden vi brukte restore, må vi unngå fill() under
+        }
+        ctx.fill();
+    }
+
+    update() {
+        if (this.type === 'laser') {
+            // Enkel målsøking
+            let dx = this.target.x - this.x;
+            let dy = this.target.y - this.y;
+            let dist = Math.hypot(dx, dy);
+            
+            if (dist < 5 || this.target.health <= 0) {
+                // Treff
+                if(this.target.health > 0) this.target.health -= this.damage;
+                this.active = false;
+            } else {
+                this.x += (dx / dist) * this.speed;
+                this.y += (dy / dist) * this.speed;
+            }
+
+        } else if (this.type === 'boomerang') {
+            // Boomerang logikk
+            if (!this.returning) {
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // Sjekk avstand fra start
+                let distFromStart = Math.hypot(this.x - this.startX, this.y - this.startY);
+                if (distFromStart >= this.maxDist) {
+                    this.returning = true;
+                    this.hitList = []; // Reset hitlist på vei tilbake så den kan treffe igjen
+                }
+            } else {
+                // Returner til eieren
+                let dx = this.owner.x - this.x;
+                let dy = this.owner.y - this.y;
+                let dist = Math.hypot(dx, dy);
+                
+                if (dist < 10) {
+                    this.active = false; // Fanget av helten
+                } else {
+                    this.x += (dx / dist) * this.speed;
+                    this.y += (dy / dist) * this.speed;
+                }
+            }
+
+            // Kollisjon med ALLE fiender (piercing)
+            enemies.forEach(enemy => {
+                let dist = Math.hypot(enemy.x - this.x, enemy.y - this.y);
+                if (dist < 20 && !this.hitList.includes(enemy)) {
+                    enemy.health -= this.damage;
+                    this.hitList.push(enemy);
+                }
+            });
+        }
+    }
+}
+
+// Mus-håndtering
+canvas.addEventListener('mousedown', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    let cost = (selectedType === 'laser') ? 50 : 100;
+
+    // Sjekk om vi klikker på stien (enkelt sjekk: er fargen grå?)
+    // For enkelhets skyld i koden, sjekker vi bare avstand til linjene
+    let onPath = false;
+    // (En avansert sjekk er utelatt for å holde koden kort, du kan plassere helter overalt unntatt oppå hverandre)
+    
+    // Sjekk om oppå annen helt
+    let blocked = heroes.some(h => Math.hypot(h.x - x, h.y - y) < 30);
+
+    if (!blocked && gold >= cost) {
+        heroes.push(new Hero(x, y, selectedType));
+        gold -= cost;
+        goldEl.innerText = gold;
+    } else if (gold < cost) {
+        alert("Ikke nok gull!");
+    }
+});
+
+// Hovedløkke
+function animate() {
+    frameCount++;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    drawPath();
+
+    // Spawn fiender
+    if (frameCount % 60 === 0) { // Hvert sekund ca
+        enemies.push(new Enemy());
+    }
+
+    // Helter
+    heroes.forEach(h => {
+        h.update();
+        h.draw();
+    });
+
+    // Fiender
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        let e = enemies[i];
+        e.update();
+        e.draw();
+
+        // Død
+        if (e.health <= 0) {
+            enemies.splice(i, 1);
+            gold += 15;
+            goldEl.innerText = gold;
+            continue;
+        }
+
+        // Kommet til mål
+        if (e.wpIndex >= waypoints.length - 1) {
+            enemies.splice(i, 1);
+            lives--;
+            livesEl.innerText = lives;
+            if (lives <= 0) {
+                alert("Game Over!");
+                location.reload();
+            }
+        }
+    }
+
+    // Prosjektiler
+    for (let i = projectiles.length - 1; i >= 0; i--) {
+        let p = projectiles[i];
+        p.update();
+        p.draw();
+        if (!p.active) projectiles.splice(i, 1);
+    }
+
+    requestAnimationFrame(animate);
+}
+
+animate();
+
+</script>
+</body>
+</html>
