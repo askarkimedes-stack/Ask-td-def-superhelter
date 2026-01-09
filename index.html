@@ -3,203 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <title>Superhelt Tower Defense</title>
-
     <style>
-        body {
-            background: #111;
-            color: white;
-            font-family: Arial, sans-serif;
-            text-align: center;
-        }
-
-        h1 {
-            margin-top: 10px;
-        }
-
-        #ui {
-            margin-bottom: 10px;
-        }
-
-        canvas {
-            background: #222;
-            border: 2px solid #555;
-            cursor: pointer;
-        }
-
-        .info {
-            margin: 5px;
-        }
+        body { font-family: sans-serif; background: #2c3e50; color: white; display: flex; flex-direction: column; align-items: center; }
+        canvas { background: #27ae60; border: 5px solid #2ecc71; cursor: crosshair; }
+        .stats { margin: 10px; font-size: 20px; font-weight: bold; }
+        .instructions { font-size: 14px; color: #ecf0f1; margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
-<h1>🦸 Superhelt Tower Defense</h1>
-
-<div id="ui">
-    <span class="info">❤️ Liv: <span id="lives">10</span></span>
-    <span class="info">💰 Penger: <span id="money">100</span></span>
-    <span class="info">Klikk for å plassere en helt (50💰)</span>
-</div>
-
-<canvas id="game" width="800" height="400"></canvas>
+    <h1>Superhelt Tower Defense</h1>
+    <div class="instructions">Klikk på gresset for å plassere en helt (Kostnad: 50 gull)</div>
+    <div class="stats">Gull: <span id="gold">100</span> | Liv: <span id="lives">10</span></div>
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
 
 <script>
-    const canvas = document.getElementById("game");
-    const ctx = canvas.getContext("2d");
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const goldEl = document.getElementById('gold');
+const livesEl = document.getElementById('lives');
 
-    let lives = 10;
-    let money = 100;
+// Spillinnstillinger
+let gold = 100;
+let lives = 10;
+const heroes = [];
+const enemies = [];
+const projectiles = [];
+const path = [
+    {x: -50, y: 200},
+    {x: 850, y: 200}
+];
 
-    const towers = [];
-    const enemies = [];
-    const bullets = [];
+// Tegn stien
+function drawPath() {
+    ctx.fillStyle = '#95a5a6';
+    ctx.fillRect(0, 175, 800, 50);
+}
 
-    const pathY = 200;
-
-    class Enemy {
-        constructor() {
-            this.x = 0;
-            this.y = pathY;
-            this.hp = 3;
-            this.speed = 1;
-        }
-
-        update() {
-            this.x += this.speed;
-            if (this.x > canvas.width) {
-                lives--;
-                updateUI();
-                return false;
+// Klasse for Superhelt (Tårn)
+class Hero {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.range = 120;
+        this.cooldown = 0;
+    }
+    draw() {
+        ctx.fillStyle = '#e74c3c'; // Rød drakt
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 20, 0, Math.PI * 2);
+        ctx.fill();
+        // Tegn kappe
+        ctx.fillStyle = '#f1c40f';
+        ctx.fillRect(this.x - 25, this.y, 10, 15);
+    }
+    update() {
+        if (this.cooldown > 0) this.cooldown--;
+        
+        // Finn fiender i nærheten
+        enemies.forEach(enemy => {
+            let dist = Math.hypot(enemy.x - this.x, enemy.y - this.y);
+            if (dist < this.range && this.cooldown === 0) {
+                projectiles.push(new Projectile(this.x, this.y, enemy));
+                this.cooldown = 30; // Skytehastighet
             }
-            return this.hp > 0;
-        }
+        });
+    }
+}
 
-        draw() {
-            ctx.fillStyle = "red";
-            ctx.fillRect(this.x, this.y - 10, 20, 20);
-        }
+// Klasse for Skurk (Fiende)
+class Enemy {
+    constructor() {
+        this.x = path[0].x;
+        this.y = path[0].y;
+        this.speed = 1.5 + Math.random();
+        this.health = 3;
+        this.radius = 15;
+    }
+    draw() {
+        ctx.fillStyle = '#2c3e50'; // Mørk skurk
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    update() {
+        this.x += this.speed;
+    }
+}
+
+// Klasse for Prosjektil (Laser)
+class Projectile {
+    constructor(x, y, target) {
+        this.x = x;
+        this.y = y;
+        this.target = target;
+        this.speed = 7;
+    }
+    draw() {
+        ctx.strokeStyle = '#f1c40f';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(this.target.x, this.target.y);
+        ctx.stroke();
+    }
+}
+
+// Håndter klikk for å plassere helt
+canvas.addEventListener('mousedown', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Sjekk om det er på gresset og om vi har nok gull
+    if ((y < 150 || y > 250) && gold >= 50) {
+        heroes.push(new Hero(x, y));
+        gold -= 50;
+        goldEl.innerText = gold;
+    }
+});
+
+// Spill-løkke
+function animate() {
+    if (lives <= 0) {
+        alert("Game Over! Skurkene vant.");
+        location.reload();
+        return;
     }
 
-    class Tower {
-        constructor(x, y) {
-            this.x = x;
-            this.y = y;
-            this.range = 100;
-            this.cooldown = 0;
-        }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawPath();
 
-        update() {
-            if (this.cooldown > 0) {
-                this.cooldown--;
-                return;
-            }
+    // Spawn fiender
+    if (Math.random() < 0.02) enemies.push(new Enemy());
 
-            const target = enemies.find(e =>
-                Math.hypot(e.x - this.x, e.y - this.y) < this.range
-            );
-
-            if (target) {
-                bullets.push(new Bullet(this.x, this.y, target));
-                this.cooldown = 30;
-            }
-        }
-
-        draw() {
-            ctx.fillStyle = "cyan";
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, 12, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-
-    class Bullet {
-        constructor(x, y, target) {
-            this.x = x;
-            this.y = y;
-            this.target = target;
-            this.speed = 4;
-        }
-
-        update() {
-            const dx = this.target.x - this.x;
-            const dy = this.target.y - this.y;
-            const dist = Math.hypot(dx, dy);
-
-            if (dist < 5) {
-                this.target.hp--;
-                return false;
-            }
-
-            this.x += (dx / dist) * this.speed;
-            this.y += (dy / dist) * this.speed;
-            return true;
-        }
-
-        draw() {
-            ctx.fillStyle = "yellow";
-            ctx.fillRect(this.x, this.y, 4, 4);
-        }
-    }
-
-    function spawnEnemy() {
-        enemies.push(new Enemy());
-    }
-
-    canvas.addEventListener("click", (e) => {
-        if (money < 50) return;
-
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        towers.push(new Tower(x, y));
-        money -= 50;
-        updateUI();
+    // Oppdater helter
+    heroes.forEach(h => {
+        h.draw();
+        h.update();
     });
 
-    function updateUI() {
-        document.getElementById("lives").textContent = lives;
-        document.getElementById("money").textContent = money;
-    }
+    // Oppdater fiender
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        let e = enemies[i];
+        e.update();
+        e.draw();
 
-    function gameLoop() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Path
-        ctx.strokeStyle = "#555";
-        ctx.beginPath();
-        ctx.moveTo(0, pathY);
-        ctx.lineTo(canvas.width, pathY);
-        ctx.stroke();
-
-        enemies.forEach((e, i) => {
-            if (!e.update()) enemies.splice(i, 1);
-            e.draw();
-        });
-
-        towers.forEach(t => {
-            t.update();
-            t.draw();
-        });
-
-        bullets.forEach((b, i) => {
-            if (!b.update()) bullets.splice(i, 1);
-            b.draw();
-        });
-
-        if (lives <= 0) {
-            ctx.fillStyle = "white";
-            ctx.font = "40px Arial";
-            ctx.fillText("GAME OVER", 300, 200);
-            return;
+        // Fiende når slutten
+        if (e.x > canvas.width) {
+            enemies.splice(i, 1);
+            lives--;
+            livesEl.innerText = lives;
         }
-
-        requestAnimationFrame(gameLoop);
     }
 
-    setInterval(spawnEnemy, 2000);
-    gameLoop();
-</script>
+    // Oppdater prosjektiler (lasere forsvinner raskt)
+    for (let i = projectiles.length - 1; i >= 0; i--) {
+        let p = projectiles[i];
+        p.draw();
+        
+        // Treff-logikk
+        p.target.health--;
+        if (p.target.health <= 0) {
+            let index = enemies.indexOf(p.target);
+            if (index > -1) {
+                enemies.splice(index, 1);
+                gold += 10;
+                goldEl.innerText = gold;
+            }
+        }
+        projectiles.splice(i, 1); // Fjern laseren etter ett bilde (frame)
+    }
 
+    requestAnimationFrame(animate);
+}
+
+animate();
+</script>
 </body>
-</html>
+</html
