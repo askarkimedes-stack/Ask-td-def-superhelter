@@ -182,3 +182,208 @@ animate();
 </script>
 </body>
 </html
+    <!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <title>Superhelt TD - Svingete Vei</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #2c3e50;
+            color: white;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #game-container {
+            display: flex;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        canvas {
+            background: #27ae60;
+            cursor: crosshair;
+            display: block;
+        }
+
+        /* Meny på høyre side */
+        #sidebar {
+            width: 200px;
+            background: #34495e;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            border-left: 5px solid #2c3e50;
+        }
+
+        h2 { margin-top: 0; font-size: 18px; text-align: center; color: #f1c40f; }
+        
+        .stats {
+            background: #2c3e50;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .hero-btn {
+            background: #ecf0f1;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: 0.2s;
+            color: #2c3e50;
+        }
+
+        .hero-btn:hover { background: #bdc3c7; }
+        .hero-btn.active { border: 3px solid #f1c40f; background: #fff; }
+
+        .hero-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-bottom: 5px;
+            border: 2px solid #333;
+        }
+
+        .cost { font-weight: bold; font-size: 12px; color: #e74c3c; }
+        .desc { font-size: 11px; color: #7f8c8d; text-align: center; }
+
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    
+    <div id="sidebar">
+        <h2>Kontrollpanel</h2>
+        <div class="stats">
+            <div>💰 Gull: <span id="gold">150</span></div>
+            <div style="margin-top:5px;">❤️ Liv: <span id="lives">20</span></div>
+        </div>
+
+        <button class="hero-btn active" onclick="selectHero('laser')">
+            <div class="hero-icon" style="background: #e74c3c;"></div>
+            <span>Laser Helt</span>
+            <span class="cost">50 Gull</span>
+            <span class="desc">Rask skyting, treffer 1 fiende.</span>
+        </button>
+
+        <button class="hero-btn" onclick="selectHero('boomerang')">
+            <div class="hero-icon" style="background: #9b59b6;"></div>
+            <span>Boomerang</span>
+            <span class="cost">100 Gull</span>
+            <span class="desc">Kaster våpen som kommer tilbake og treffer alle.</span>
+        </button>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const goldEl = document.getElementById('gold');
+const livesEl = document.getElementById('lives');
+const buttons = document.querySelectorAll('.hero-btn');
+
+// Spillvariabler
+let gold = 150;
+let lives = 20;
+let selectedType = 'laser'; // Standard valg
+let frameCount = 0;
+
+const heroes = [];
+const enemies = [];
+const projectiles = [];
+
+// Definer en svingete vei (waypoints)
+const waypoints = [
+    {x: 0, y: 100},
+    {x: 700, y: 100},
+    {x: 700, y: 300},
+    {x: 100, y: 300},
+    {x: 100, y: 500},
+    {x: 800, y: 500}
+];
+
+// Menyvalg funksjon
+window.selectHero = function(type) {
+    selectedType = type;
+    buttons.forEach(btn => btn.classList.remove('active'));
+    // Finn knappen som ble trykket (enkel logikk for demo)
+    if(type === 'laser') buttons[0].classList.add('active');
+    else buttons[1].classList.add('active');
+};
+
+// Tegn veien
+function drawPath() {
+    ctx.beginPath();
+    ctx.lineWidth = 40;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#95a5a6';
+    
+    ctx.moveTo(waypoints[0].x, waypoints[0].y);
+    for (let i = 1; i < waypoints.length; i++) {
+        ctx.lineTo(waypoints[i].x, waypoints[i].y);
+    }
+    ctx.stroke();
+
+    // Tegn en tynn linje i midten for å se ruten
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#7f8c8d';
+    ctx.stroke();
+}
+
+// KLASSER
+
+class Hero {
+    constructor(x, y, type) {
+        this.x = x;
+        this.y = y;
+        this.type = type;
+        this.cooldown = 0;
+        
+        if (type === 'laser') {
+            this.range = 150;
+            this.color = '#e74c3c';
+            this.cost = 50;
+            this.fireRate = 40; 
+        } else if (type === 'boomerang') {
+            this.range = 180;
+            this.color = '#9b59b6';
+            this.cost = 100;
+            this.fireRate = 90; // Skyter tregere
+        }
+    }
+
+    draw() {
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 15, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Kappe
+        ctx.fillStyle = '#f1c40f';
+        ctx.fillRect(this.x - 10, this.y + 5, 20, 10);
+    }
+
+    update() {
+        if (this.cooldown > 0) this.cooldown--;
+
+        // Finn nærmeste fiende
+        let target = null;
+        for (let enemy of enemies) {
+            let dist = Math.hypot(enemy.x - this.x, enemy.y - this.y);
+            if (dist < this.range) {
+                target = enemy;
+                break; // Skyt på den første vi finner (oftest den som kom
