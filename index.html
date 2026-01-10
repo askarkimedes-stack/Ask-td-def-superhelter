@@ -2,7 +2,7 @@
 <html lang="no">
 <head>
     <meta charset="UTF-8">
-    <title>Superhelt TD - Pro Kontroll</title>
+    <title>Superhelt TD - Wave Kontroll</title>
     <style>
         body { margin: 0; background: #1a1a1a; color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; }
         
@@ -13,7 +13,6 @@
         .easy { background: #2ecc71; color: white; }
         .medium { background: #f1c40f; color: black; }
         .hard { background: #e74c3c; color: white; }
-        .diff-btn:hover { transform: scale(1.05); }
 
         /* --- SPILL-OMRÅDE --- */
         #game-ui { display: none; flex-direction: column; align-items: center; margin-top: 20px; }
@@ -26,7 +25,6 @@
         .buy-btn { background: #ecf0f1; color: #2c3e50; text-align: left; margin-bottom: 5px; border-bottom: 3px solid #bdc3c7; }
         .buy-btn.active { outline: 3px solid #f1c40f; background: #fff; }
         
-        /* FART */
         .speed-container { display: flex; gap: 5px; margin-bottom: 10px; }
         .speed-btn { flex: 1; background: #95a5a6; color: white; padding: 8px; border: none; cursor: pointer; border-radius: 3px; font-size: 12px; }
         .speed-btn.active { background: #f1c40f; color: black; font-weight: bold; }
@@ -36,7 +34,7 @@
         .dev-group { background: #34495e; padding: 10px; border-radius: 5px; border: 1px solid #444; }
         .dev-group h4 { margin: 0 0 8px 0; color: #f1c40f; font-size: 13px; text-transform: uppercase; }
         .dev-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-size: 11px; }
-        .dev-input { width: 50px; padding: 3px; border-radius: 3px; border: none; text-align: center; background: #ebf0f1; }
+        .dev-input { width: 50px; padding: 3px; border-radius: 3px; border: none; text-align: center; background: #ebf0f1; color: black; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -44,7 +42,6 @@
 <div id="start-screen">
     <div id="map-select" class="menu-box">
         <h1 style="color:#f1c40f; font-size: 40px; margin-top: 0;">Superhelt TD</h1>
-        <p>Velg et kart for å starte:</p>
         <div style="background:#2ecc71; padding:20px; border-radius:10px; cursor:pointer;" onclick="showDifficulty()">
             <div style="font-size: 50px;">🌲</div>
             <h3>Gressletten</h3>
@@ -52,9 +49,9 @@
     </div>
     <div id="diff-select" class="menu-box" style="display:none;">
         <h2 style="color:#f1c40f">Velg vanskelighetsgrad</h2>
-        <button class="diff-btn easy" onclick="startGame('easy')">LETT (300g / 20 liv)</button>
-        <button class="diff-btn medium" onclick="startGame('medium')">NORMAL (150g / 10 liv)</button>
-        <button class="diff-btn hard" onclick="startGame('hard')">VANSKELIG (100g / 5 liv)</button>
+        <button class="diff-btn easy" onclick="startGame('easy')">LETT</button>
+        <button class="diff-btn medium" onclick="startGame('medium')">NORMAL</button>
+        <button class="diff-btn hard" onclick="startGame('hard')">VANSKELIG</button>
     </div>
 </div>
 
@@ -76,7 +73,7 @@
                 <button class="btn buy-btn" id="cannonBtn" onclick="setTool('cannon')">KANON <span id="pC_ui" style="float:right">400g</span></button>
             </div>
             <div id="upgradeMenu" style="display:none;">
-                <h3 style="margin:0; font-size:16px;">Valgt Helt</h3>
+                <h3 style="margin:0; font-size:16px;">Oppgrader</h3>
                 <p id="heroStats" style="font-size:12px; margin: 5px 0;"></p>
                 <button class="btn" style="background:#2ecc71; color:white;" onclick="applyUpgrade()">OPPGRADER <span id="costLabel"></span></button>
                 <button class="btn" style="background:#e74c3c; color:white; margin-top:5px;" onclick="deselectHero()">LUKK</button>
@@ -105,11 +102,12 @@
             <div class="dev-row"><label>Fart:</label><input type="number" id="sC" class="dev-input" value="150"></div>
         </div>
         <div class="dev-group">
-            <h4>👾 FIENDER</h4>
+            <h4>👾 FIENDER / BØLGER</h4>
             <div class="dev-row"><label>Start HP:</label><input type="number" id="eHP" class="dev-input" value="5"></div>
             <div class="dev-row"><label>HP Skala:</label><input type="number" id="eScale" class="dev-input" value="3"></div>
-            <div class="dev-row"><label>Fart:</label><input type="number" step="0.1" id="eSpeed" class="dev-input" value="1.2"></div>
-            <button class="btn" style="background:#f1c40f; font-size:11px; padding:5px; margin-top:5px;" onclick="updateDevStats()">BRUK ENDRINGER</button>
+            <div class="dev-row"><label>Antall (W1):</label><input type="number" id="wCount" class="dev-input" value="5"></div>
+            <div class="dev-row"><label>Antall Vekst:</label><input type="number" id="wGrowth" class="dev-input" value="2"></div>
+            <button class="btn" style="background:#f1c40f; font-size:11px; padding:5px; margin-top:5px; color: black;" onclick="updateDevStats()">BRUK ENDRINGER</button>
         </div>
     </div>
 </div>
@@ -122,7 +120,8 @@ let config = {
     laser: { dmg: 2, range: 130, speed: 30, cost: 50 },
     boom: { dmg: 4, range: 120, speed: 60, cost: 100 },
     cannon: { dmg: 20, range: 150, speed: 150, cost: 400 },
-    enemy: { hpBase: 5, hpScale: 3, speed: 1.2 }
+    enemy: { hpBase: 5, hpScale: 3, speed: 1.2 },
+    waves: { startCount: 5, growth: 2 }
 };
 
 let isGameRunning = false, gameSpeed = 1, gold = 150, lives = 10;
@@ -140,6 +139,8 @@ function startGame(diff) {
     if(diff === 'easy') { gold = 300; lives = 20; }
     else if(diff === 'hard') { gold = 100; lives = 5; }
     else { gold = 150; lives = 10; }
+    
+    enemiesInWave = config.waves.startCount;
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('game-ui').style.display = 'flex';
     isGameRunning = true; 
@@ -157,9 +158,17 @@ function updateDevStats() {
     config.cannon.dmg = parseFloat(document.getElementById('dC').value);
     config.cannon.cost = parseFloat(document.getElementById('pC').value);
     config.cannon.speed = parseFloat(document.getElementById('sC').value);
+    
+    // FIENDER
     config.enemy.hpBase = parseFloat(document.getElementById('eHP').value);
     config.enemy.hpScale = parseFloat(document.getElementById('eScale').value);
     config.enemy.speed = parseFloat(document.getElementById('eSpeed').value);
+    
+    // BØLGER
+    config.waves.startCount = parseInt(document.getElementById('wCount').value);
+    config.waves.growth = parseInt(document.getElementById('wGrowth').value);
+
+    // Oppdater UI priser
     document.getElementById('pL_ui').innerText = config.laser.cost + "g";
     document.getElementById('pB_ui').innerText = config.boom.cost + "g";
     document.getElementById('pC_ui').innerText = config.cannon.cost + "g";
@@ -176,13 +185,13 @@ function isTooCloseToPath(x, y) {
     for (let i = 0; i < waypoints.length - 1; i++) {
         let p1 = waypoints[i], p2 = waypoints[i+1];
         let A = x - p1.x, B = y - p1.y, C = p2.x - p1.x, D = p2.y - p1.y;
-        let dot = A * C + B * D;
-        let len_sq = C * C + D * D;
+        let dot = (x - p1.x) * (p2.x - p1.x) + (y - p1.y) * (p2.y - p1.y);
+        let len_sq = (p2.x - p1.x)**2 + (p2.y - p1.y)**2;
         let param = (len_sq !== 0) ? dot / len_sq : -1;
         let xx, yy;
         if (param < 0) { xx = p1.x; yy = p1.y; }
         else if (param > 1) { xx = p2.x; yy = p2.y; }
-        else { xx = p1.x + param * C; yy = p1.y + param * D; }
+        else { xx = p1.x + param * (p2.x - p1.x); yy = p1.y + param * (p2.y - p1.y); }
         if (Math.hypot(x - xx, y - yy) < pathWidth) return true;
     }
     return false;
@@ -278,9 +287,24 @@ function gameLoop() {
     ctx.moveTo(waypoints[0].x, waypoints[0].y); waypoints.forEach(w => ctx.lineTo(w.x, w.y)); ctx.stroke();
     
     if (waveActive) {
-        if (frame % Math.floor(60/gameSpeed) === 0 && spawnedInWave < enemiesInWave) { enemies.push(new Enemy(currentWave % 10 === 0 && spawnedInWave === enemiesInWave - 1)); spawnedInWave++; }
-        if (spawnedInWave >= enemiesInWave && enemies.length === 0) { waveActive = false; waveTimer = 180; gold += 50; updateUI(); }
-    } else if ((waveTimer -= gameSpeed) <= 0) { currentWave++; spawnedInWave = 0; waveActive = true; enemiesInWave = 5 + Math.floor(currentWave * 1.5); updateUI(); }
+        if (frame % Math.floor(60/gameSpeed) === 0 && spawnedInWave < enemiesInWave) { 
+            enemies.push(new Enemy(currentWave % 10 === 0 && spawnedInWave === enemiesInWave - 1)); 
+            spawnedInWave++; 
+        }
+        if (spawnedInWave >= enemiesInWave && enemies.length === 0) { 
+            waveActive = false; 
+            waveTimer = 180; 
+            gold += 50; 
+            updateUI(); 
+        }
+    } else if ((waveTimer -= gameSpeed) <= 0) { 
+        currentWave++; 
+        spawnedInWave = 0; 
+        waveActive = true; 
+        // Beregn antall fiender basert på vekst-instillingene
+        enemiesInWave = config.waves.startCount + ((currentWave - 1) * config.waves.growth); 
+        updateUI(); 
+    }
     
     heroes.forEach(h => { h.update(); h.draw(); });
     enemies.forEach((e, i) => { e.update(); e.draw(); if(e.hp <= 0) { enemies.splice(i, 1); gold += e.isBoss ? 100 : 15; updateUI(); } });
@@ -289,7 +313,11 @@ function gameLoop() {
     if(lives > 0) requestAnimationFrame(gameLoop); else { alert("Spillet er slutt!"); location.reload(); }
 }
 
-function updateUI() { document.getElementById('goldText').innerText = Math.floor(gold); document.getElementById('livesText').innerText = lives; document.getElementById('waveText').innerText = currentWave; }
+function updateUI() { 
+    document.getElementById('goldText').innerText = Math.floor(gold); 
+    document.getElementById('livesText').innerText = lives; 
+    document.getElementById('waveText').innerText = currentWave; 
+}
 function setTool(t) { currentTool = t; deselectHero(); document.querySelectorAll('.buy-btn').forEach(b => b.classList.remove('active')); document.getElementById(t+'Btn').classList.add('active'); }
 function selectHero(h) { selectedHero = h; document.getElementById('buildMenu').style.display = 'none'; document.getElementById('upgradeMenu').style.display = 'block'; updateUpgradeText(); }
 function deselectHero() { selectedHero = null; document.getElementById('buildMenu').style.display = 'block'; document.getElementById('upgradeMenu').style.display = 'none'; }
