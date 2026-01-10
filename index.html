@@ -2,445 +2,264 @@
 <html lang="no">
 <head>
     <meta charset="UTF-8">
-    <title>Superhelt TD - Svingete Vei</title>
+    <title>Superhelt TD - Boss Wave Edition</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #2c3e50;
-            color: white;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        #game-container {
-            display: flex;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
-
-        canvas {
-            background: #27ae60;
-            cursor: crosshair;
-            display: block;
-        }
-
-        /* Meny på høyre side */
-        #sidebar {
-            width: 200px;
-            background: #34495e;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            border-left: 5px solid #2c3e50;
-        }
-
-        h2 { margin-top: 0; font-size: 18px; text-align: center; color: #f1c40f; }
-        
-        .stats {
-            background: #2c3e50;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-
-        .hero-btn {
-            background: #ecf0f1;
-            border: none;
-            padding: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            transition: 0.2s;
-            color: #2c3e50;
-        }
-
-        .hero-btn:hover { background: #bdc3c7; }
-        .hero-btn.active { border: 3px solid #f1c40f; background: #fff; }
-
-        .hero-icon {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            margin-bottom: 5px;
-            border: 2px solid #333;
-        }
-
-        .cost { font-weight: bold; font-size: 12px; color: #e74c3c; }
-        .desc { font-size: 11px; color: #7f8c8d; text-align: center; }
-
+        body { margin: 0; background: #1a1a1a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        #wrapper { display: flex; background: #2c3e50; border: 5px solid #34495e; border-radius: 10px; overflow: hidden; }
+        canvas { background: #27ae60; cursor: pointer; }
+        #sidebar { width: 250px; padding: 20px; background: #34495e; display: flex; flex-direction: column; gap: 15px; }
+        .stats { font-size: 18px; font-weight: bold; color: #f1c40f; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 8px; }
+        .buy-btn { background: #ecf0f1; color: #2c3e50; }
+        .buy-btn.active { outline: 4px solid #f1c40f; background: #fff; }
+        .upgrade-container { border-top: 2px solid #2c3e50; padding-top: 15px; display: none; }
+        .upgrade-btn { background: #2ecc71; color: white; font-size: 16px; }
+        .cancel-btn { background: #e74c3c; color: white; }
+        small { display: block; font-size: 11px; color: #7f8c8d; }
+        #wave-alert { position: absolute; top: 20px; left: 400px; transform: translateX(-50%); font-size: 24px; font-weight: bold; pointer-events: none; color: #f1c40f; text-shadow: 2px 2px #000; }
     </style>
 </head>
 <body>
 
-<div id="game-container">
+<div id="wave-alert">Wave 1</div>
+<div id="wrapper">
     <canvas id="gameCanvas" width="800" height="600"></canvas>
-    
     <div id="sidebar">
-        <h2>Kontrollpanel</h2>
-        <div class="stats">
-            <div>💰 Gull: <span id="gold">150</span></div>
-            <div style="margin-top:5px;">❤️ Liv: <span id="lives">20</span></div>
+        <div class="stats">💰 Gull: <span id="goldText">150</span></div>
+        <div class="stats">❤️ Liv: <span id="livesText">10</span></div>
+        <div class="stats">⚔️ Wave: <span id="waveText">1</span></div>
+
+        <div id="buildMenu">
+            <h3 style="margin:0 0 10px 0">Butikk</h3>
+            <button class="btn buy-btn active" id="laserBtn" onclick="setTool('laser')">LASER HELT<br><small>50 Gull</small></button>
+            <button class="btn buy-btn" id="boomBtn" onclick="setTool('boom')">BOOMERANG<br><small>120 Gull</small></button>
         </div>
 
-        <button class="hero-btn active" onclick="selectHero('laser')">
-            <div class="hero-icon" style="background: #e74c3c;"></div>
-            <span>Laser Helt</span>
-            <span class="cost">50 Gull</span>
-            <span class="desc">Rask skyting, treffer 1 fiende.</span>
-        </button>
-
-        <button class="hero-btn" onclick="selectHero('boomerang')">
-            <div class="hero-icon" style="background: #9b59b6;"></div>
-            <span>Boomerang</span>
-            <span class="cost">100 Gull</span>
-            <span class="desc">Kaster våpen som kommer tilbake og treffer alle.</span>
-        </button>
+        <div id="upgradeMenu" class="upgrade-container">
+            <h3 id="heroTitle" style="margin:0">Oppgrader</h3>
+            <p id="heroStats" style="font-size:13px"></p>
+            <button class="btn upgrade-btn" onclick="applyUpgrade()">OPPGRADER <br><span id="costLabel"></span></button>
+            <button class="btn cancel-btn" onclick="deselectHero()">AVBRYT</button>
+        </div>
     </div>
 </div>
 
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const goldEl = document.getElementById('gold');
-const livesEl = document.getElementById('lives');
-const buttons = document.querySelectorAll('.hero-btn');
 
-// Spillvariabler
+// Tilstand
 let gold = 150;
-let lives = 20;
-let selectedType = 'laser'; // Standard valg
-let frameCount = 0;
+let lives = 10;
+let currentTool = 'laser';
+let selectedHero = null;
+let frame = 0;
+
+// Wave system
+let currentWave = 1;
+let enemiesInWave = 0;
+let spawnedInWave = 0;
+let waveActive = true;
+let waveTimer = 0;
 
 const heroes = [];
 const enemies = [];
 const projectiles = [];
+const waypoints = [{x:0, y:100}, {x:700, y:100}, {x:700, y:300}, {x:100, y:300}, {x:100, y:500}, {x:850, y:500}];
 
-// Definer en svingete vei (waypoints)
-const waypoints = [
-    {x: 0, y: 100},
-    {x: 700, y: 100},
-    {x: 700, y: 300},
-    {x: 100, y: 300},
-    {x: 100, y: 500},
-    {x: 800, y: 500}
-];
-
-// Menyvalg funksjon
-window.selectHero = function(type) {
-    selectedType = type;
-    buttons.forEach(btn => btn.classList.remove('active'));
-    // Finn knappen som ble trykket (enkel logikk for demo)
-    if(type === 'laser') buttons[0].classList.add('active');
-    else buttons[1].classList.add('active');
-};
-
-// Tegn veien
-function drawPath() {
-    ctx.beginPath();
-    ctx.lineWidth = 40;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.strokeStyle = '#95a5a6';
-    
-    ctx.moveTo(waypoints[0].x, waypoints[0].y);
-    for (let i = 1; i < waypoints.length; i++) {
-        ctx.lineTo(waypoints[i].x, waypoints[i].y);
-    }
-    ctx.stroke();
-
-    // Tegn en tynn linje i midten for å se ruten
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = '#7f8c8d';
-    ctx.stroke();
+function setTool(t) {
+    currentTool = t;
+    deselectHero();
+    document.getElementById('laserBtn').classList.toggle('active', t === 'laser');
+    document.getElementById('boomBtn').classList.toggle('active', t === 'boom');
 }
 
-// KLASSER
+function selectHero(h) {
+    selectedHero = h;
+    document.getElementById('buildMenu').style.display = 'none';
+    document.getElementById('upgradeMenu').style.display = 'block';
+    updateUpgradeText();
+}
+
+function deselectHero() {
+    selectedHero = null;
+    document.getElementById('buildMenu').style.display = 'block';
+    document.getElementById('upgradeMenu').style.display = 'none';
+}
+
+function updateUpgradeText() {
+    if (!selectedHero) return;
+    document.getElementById('heroStats').innerHTML = `Nivå: ${selectedHero.lvl}<br>Skade: ${selectedHero.dmg.toFixed(1)}<br>Rekkevidde: ${selectedHero.range}`;
+    document.getElementById('costLabel').innerText = selectedHero.upgradeCost + " Gull";
+}
+
+function applyUpgrade() {
+    if (selectedHero && gold >= selectedHero.upgradeCost) {
+        gold -= selectedHero.upgradeCost;
+        selectedHero.lvl++;
+        selectedHero.dmg *= 1.4;
+        selectedHero.range += 15;
+        selectedHero.upgradeCost = Math.floor(selectedHero.upgradeCost * 1.8);
+        updateUpgradeText();
+    }
+}
 
 class Hero {
     constructor(x, y, type) {
-        this.x = x;
-        this.y = y;
-        this.type = type;
-        this.cooldown = 0;
-        
-        if (type === 'laser') {
-            this.range = 150;
-            this.color = '#e74c3c';
-            this.cost = 50;
-            this.fireRate = 40; 
-        } else if (type === 'boomerang') {
-            this.range = 180;
-            this.color = '#9b59b6';
-            this.cost = 100;
-            this.fireRate = 90; // Skyter tregere
+        this.x = x; this.y = y; this.type = type;
+        this.lvl = 1; this.cd = 0;
+        if(type === 'laser') {
+            this.dmg = 3; this.range = 130; this.speed = 30; this.color = '#e74c3c'; this.upgradeCost = 40;
+        } else {
+            this.dmg = 0.8; this.range = 120; this.speed = 60; this.color = '#9b59b6'; this.upgradeCost = 70;
         }
     }
-
     draw() {
         ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, 15, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Kappe
-        ctx.fillStyle = '#f1c40f';
-        ctx.fillRect(this.x - 10, this.y + 5, 20, 10);
-    }
-
-    update() {
-        if (this.cooldown > 0) this.cooldown--;
-
-        // Finn nærmeste fiende
-        let target = null;
-        for (let enemy of enemies) {
-            let dist = Math.hypot(enemy.x - this.x, enemy.y - this.y);
-            if (dist < this.range) {
-                target = enemy;
-                break; // Skyt på den første vi finner (oftest den som kom først)
-            }
+        ctx.beginPath(); ctx.arc(this.x, this.y, 18, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = "white"; ctx.font = "bold 12px Arial"; ctx.fillText(this.lvl, this.x-4, this.y+5);
+        if (selectedHero === this) {
+            ctx.strokeStyle = "white"; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(this.x, this.y, 22, 0, Math.PI*2); ctx.stroke();
+            ctx.strokeStyle = "rgba(255,255,255,0.2)";
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.range, 0, Math.PI*2); ctx.stroke();
         }
-
-        if (target && this.cooldown <= 0) {
-            projectiles.push(new Projectile(this.x, this.y, target, this.type, this));
-            this.cooldown = this.fireRate;
+    }
+    update() {
+        if(this.cd > 0) this.cd--;
+        if(this.cd <= 0) {
+            let target = enemies.find(e => Math.hypot(e.x-this.x, e.y-this.y) < this.range);
+            if(target) {
+                projectiles.push(new Projectile(this.x, this.y, target, this));
+                this.cd = this.speed;
+            }
         }
     }
 }
 
 class Enemy {
-    constructor() {
-        this.wpIndex = 0; // Hvilket waypoint går vi mot
-        this.x = waypoints[0].x;
-        this.y = waypoints[0].y;
-        this.speed = 1 + Math.random(); // Variert fart
-        this.radius = 12;
-        this.health = 5 + Math.floor(frameCount / 1000); // Blir vanskeligere over tid
-        this.maxHealth = this.health;
+    constructor(isBoss = false) {
+        this.wp = 0; this.x = waypoints[0].x; this.y = waypoints[0].y;
+        this.isBoss = isBoss;
+        this.radius = isBoss ? 30 : 12;
+        this.color = isBoss ? '#c0392b' : '#2c3e50';
+        
+        // Helse skalerer med wave
+        let baseHp = isBoss ? 200 : 5;
+        this.hp = baseHp + (currentWave * (isBoss ? 50 : 2));
+        this.maxHp = this.hp;
+        this.speed = isBoss ? 0.6 : (1.2 + Math.random() * 0.5);
     }
-
-    draw() {
-        ctx.fillStyle = '#2c3e50';
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Helsebar
-        ctx.fillStyle = 'red';
-        ctx.fillRect(this.x - 10, this.y - 20, 20, 4);
-        ctx.fillStyle = '#2ecc71';
-        ctx.fillRect(this.x - 10, this.y - 20, 20 * (this.health / this.maxHealth), 4);
-    }
-
     update() {
-        // Logikk for å følge veien
-        let target = waypoints[this.wpIndex + 1];
-        if (!target) return; // Ferdig med veien
-
-        let dx = target.x - this.x;
-        let dy = target.y - this.y;
-        let dist = Math.hypot(dx, dy);
-
-        if (dist < 5) {
-            this.wpIndex++; // Nådde punktet, gå til neste
-        } else {
-            // Normaliser og flytt
-            this.x += (dx / dist) * this.speed;
-            this.y += (dy / dist) * this.speed;
-        }
+        let t = waypoints[this.wp + 1];
+        let d = Math.hypot(t.x-this.x, t.y-this.y);
+        if(d < 5) this.wp++;
+        else { this.x += (t.x-this.x)/d * this.speed; this.y += (t.y-this.y)/d * this.speed; }
+        if(this.wp >= waypoints.length-1) { lives--; enemies.splice(enemies.indexOf(this), 1); }
+    }
+    draw() {
+        ctx.fillStyle = this.color;
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = 'red'; ctx.fillRect(this.x-15, this.y-(this.radius+8), 30, 4);
+        ctx.fillStyle = 'lime'; ctx.fillRect(this.x-15, this.y-(this.radius+8), 30*(this.hp/this.maxHp), 4);
     }
 }
 
 class Projectile {
-    constructor(x, y, target, type, owner) {
-        this.x = x;
-        this.y = y;
-        this.startX = x;
-        this.startY = y;
-        this.target = target;
-        this.type = type;
-        this.owner = owner; // Hvem skjøt?
-        this.active = true;
-        this.hitList = []; // For boomerang: husk hvem vi har truffet så vi ikke treffer samme 100 ganger
-        
-        if (type === 'laser') {
-            this.speed = 8;
-            this.damage = 2;
-        } else {
-            // Boomerang stats
-            this.speed = 5;
-            this.damage = 3;
-            this.returning = false; // Er den på vei tilbake?
-            this.maxDist = 200; // Hvor langt ut den flyr
-            
-            // Beregn vinkel mot målet når den blir skutt
-            let angle = Math.atan2(target.y - y, target.x - x);
-            this.vx = Math.cos(angle) * this.speed;
-            this.vy = Math.sin(angle) * this.speed;
-        }
+    constructor(x, y, target, parent) {
+        this.x = x; this.y = y; this.target = target; this.parent = parent;
+        this.active = true; this.type = parent.type;
+        if(this.type === 'boom') { this.angle = Math.atan2(target.y-y, target.x-x); this.t = 0; this.hits = []; }
     }
-
-    draw() {
-        ctx.beginPath();
-        if (this.type === 'laser') {
-            ctx.fillStyle = '#e74c3c';
-            ctx.arc(this.x, this.y, 4, 0, Math.PI * 2);
-        } else {
-            ctx.fillStyle = '#9b59b6';
-            // Roterende effekt (visuell)
-            let angle = frameCount * 0.5;
-            ctx.save();
-            ctx.translate(this.x, this.y);
-            ctx.rotate(angle);
-            ctx.fillRect(-6, -2, 12, 4);
-            ctx.fillRect(-2, -6, 4, 12);
-            ctx.restore();
-            return; // Siden vi brukte restore, må vi unngå fill() under
-        }
-        ctx.fill();
-    }
-
     update() {
-        if (this.type === 'laser') {
-            // Enkel målsøking
-            let dx = this.target.x - this.x;
-            let dy = this.target.y - this.y;
-            let dist = Math.hypot(dx, dy);
-            
-            if (dist < 5 || this.target.health <= 0) {
-                // Treff
-                if(this.target.health > 0) this.target.health -= this.damage;
-                this.active = false;
-            } else {
-                this.x += (dx / dist) * this.speed;
-                this.y += (dy / dist) * this.speed;
-            }
-
-        } else if (this.type === 'boomerang') {
-            // Boomerang logikk
-            if (!this.returning) {
-                this.x += this.vx;
-                this.y += this.vy;
-                
-                // Sjekk avstand fra start
-                let distFromStart = Math.hypot(this.x - this.startX, this.y - this.startY);
-                if (distFromStart >= this.maxDist) {
-                    this.returning = true;
-                    this.hitList = []; // Reset hitlist på vei tilbake så den kan treffe igjen
-                }
-            } else {
-                // Returner til eieren
-                let dx = this.owner.x - this.x;
-                let dy = this.owner.y - this.y;
-                let dist = Math.hypot(dx, dy);
-                
-                if (dist < 10) {
-                    this.active = false; // Fanget av helten
-                } else {
-                    this.x += (dx / dist) * this.speed;
-                    this.y += (dy / dist) * this.speed;
-                }
-            }
-
-            // Kollisjon med ALLE fiender (piercing)
-            enemies.forEach(enemy => {
-                let dist = Math.hypot(enemy.x - this.x, enemy.y - this.y);
-                if (dist < 20 && !this.hitList.includes(enemy)) {
-                    enemy.health -= this.damage;
-                    this.hitList.push(enemy);
-                }
+        if(this.type === 'laser') {
+            let d = Math.hypot(this.target.x-this.x, this.target.y-this.y);
+            if(d < 10) { this.target.hp -= this.parent.dmg; this.active = false; }
+            else { this.x += (this.target.x-this.x)/d * 10; this.y += (this.target.y-this.y)/d * 10; }
+        } else {
+            this.t += 0.06;
+            this.x = this.parent.x + Math.cos(this.angle) * Math.sin(this.t) * this.parent.range;
+            this.y = this.parent.y + Math.sin(this.angle) * Math.sin(this.t) * this.parent.range;
+            enemies.forEach(e => {
+                if(Math.hypot(e.x-this.x, e.y-this.y) < 20 && !this.hits.includes(e)) { e.hp -= this.parent.dmg; this.hits.push(e); }
             });
+            if(this.t > Math.PI) this.active = false;
         }
+    }
+    draw() {
+        ctx.fillStyle = this.type === 'laser' ? 'yellow' : '#9b59b6';
+        ctx.beginPath(); ctx.arc(this.x, this.y, 5, 0, Math.PI*2); ctx.fill();
     }
 }
 
-// Mus-håndtering
-canvas.addEventListener('mousedown', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+function startNextWave() {
+    currentWave++;
+    spawnedInWave = 0;
+    waveActive = true;
+    enemiesInWave = 5 + Math.floor(currentWave * 1.5);
+    document.getElementById('wave-alert').innerText = "Wave " + currentWave + (currentWave % 15 === 0 ? " - BOSS INCOMING!" : "");
+}
 
-    let cost = (selectedType === 'laser') ? 50 : 100;
+canvas.onmousedown = (e) => {
+    let r = canvas.getBoundingClientRect();
+    let x = e.clientX - r.left;
+    let y = e.clientY - r.top;
+    let found = heroes.find(h => Math.hypot(h.x-x, h.y-y) < 25);
+    if(found) { selectHero(found); return; }
+    let cost = currentTool === 'laser' ? 50 : 120;
+    if(gold >= cost) { heroes.push(new Hero(x, y, currentTool)); gold -= cost; }
+}
 
-    // Sjekk om vi klikker på stien (enkelt sjekk: er fargen grå?)
-    // For enkelhets skyld i koden, sjekker vi bare avstand til linjene
-    let onPath = false;
-    // (En avansert sjekk er utelatt for å holde koden kort, du kan plassere helter overalt unntatt oppå hverandre)
+function gameLoop() {
+    frame++;
+    ctx.clearRect(0,0,800,600);
     
-    // Sjekk om oppå annen helt
-    let blocked = heroes.some(h => Math.hypot(h.x - x, h.y - y) < 30);
+    // Tegn vei
+    ctx.strokeStyle = '#95a5a6'; ctx.lineWidth = 40; ctx.lineJoin = 'round'; ctx.beginPath();
+    ctx.moveTo(waypoints[0].x, waypoints[0].y); waypoints.forEach(w => ctx.lineTo(w.x, w.y)); ctx.stroke();
 
-    if (!blocked && gold >= cost) {
-        heroes.push(new Hero(x, y, selectedType));
-        gold -= cost;
-        goldEl.innerText = gold;
-    } else if (gold < cost) {
-        alert("Ikke nok gull!");
-    }
-});
-
-// Hovedløkke
-function animate() {
-    frameCount++;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    drawPath();
-
-    // Spawn fiender
-    if (frameCount % 60 === 0) { // Hvert sekund ca
-        enemies.push(new Enemy());
-    }
-
-    // Helter
-    heroes.forEach(h => {
-        h.update();
-        h.draw();
-    });
-
-    // Fiender
-    for (let i = enemies.length - 1; i >= 0; i--) {
-        let e = enemies[i];
-        e.update();
-        e.draw();
-
-        // Død
-        if (e.health <= 0) {
-            enemies.splice(i, 1);
-            gold += 15;
-            goldEl.innerText = gold;
-            continue;
-        }
-
-        // Kommet til mål
-        if (e.wpIndex >= waypoints.length - 1) {
-            enemies.splice(i, 1);
-            lives--;
-            livesEl.innerText = lives;
-            if (lives <= 0) {
-                alert("Game Over!");
-                location.reload();
+    // Wave logikk
+    if (waveActive) {
+        if (frame % 60 === 0 && spawnedInWave < enemiesInWave) {
+            // Sjekk om det er boss-wave
+            if (currentWave % 15 === 0 && spawnedInWave === enemiesInWave - 1) {
+                enemies.push(new Enemy(true)); // Siste fiende er boss
+            } else {
+                enemies.push(new Enemy(false));
             }
+            spawnedInWave++;
         }
+        if (spawnedInWave >= enemiesInWave && enemies.length === 0) {
+            waveActive = false;
+            waveTimer = 180; // 3 sek pause
+            gold += 50; // Bonus for bølge
+        }
+    } else {
+        waveTimer--;
+        if (waveTimer <= 0) startNextWave();
     }
 
-    // Prosjektiler
-    for (let i = projectiles.length - 1; i >= 0; i--) {
-        let p = projectiles[i];
-        p.update();
-        p.draw();
-        if (!p.active) projectiles.splice(i, 1);
-    }
+    heroes.forEach(h => { h.update(); h.draw(); });
+    enemies.forEach((e, i) => { 
+        e.update(); e.draw(); 
+        if(e.hp <= 0) { 
+            enemies.splice(i, 1); 
+            gold += e.isBoss ? 100 : 15; 
+        } 
+    });
+    projectiles.forEach((p, i) => { p.update(); p.draw(); if(!p.active) projectiles.splice(i, 1); });
 
-    requestAnimationFrame(animate);
+    document.getElementById('goldText').innerText = Math.floor(gold);
+    document.getElementById('livesText').innerText = lives;
+    document.getElementById('waveText').innerText = currentWave;
+
+    if(lives > 0) requestAnimationFrame(gameLoop);
+    else { ctx.fillStyle = "rgba(0,0,0,0.8)"; ctx.fillRect(0,0,800,600); ctx.fillStyle="white"; ctx.font="40px Arial"; ctx.fillText("GAME OVER", 280, 300); }
 }
 
-animate();
-
+// Start wave 1
+enemiesInWave = 5;
+gameLoop();
 </script>
 </body>
 </html>
