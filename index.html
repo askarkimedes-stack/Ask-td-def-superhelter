@@ -231,4 +231,60 @@ class Enemy {
 class Projectile {
     constructor(x, y, target, parent) {
         this.x = x; this.y = y; this.target = target; this.parent = parent; this.active = true; this.type = parent.type;
-        if(this.type === 'boom') { this.angle = Math.atan2(target.y-y, target.x-x); this.
+        if(this.type === 'boom') { this.angle = Math.atan2(target.y-y, target.x-x); this.t = 0; this.hits = []; }
+    }
+    update() {
+        if(this.type === 'laser' || this.type === 'cannon') {
+            if(!this.target || this.target.hp <= 0) { this.active = false; return; }
+            let d = Math.hypot(this.target.x-this.x, this.target.y-this.y);
+            if(d < 10) {
+                if(this.type === 'cannon') {
+                    enemies.forEach(e => { if(Math.hypot(e.x - this.x, e.y - this.y) < 100) e.hp -= this.parent.dmg; });
+                    ctx.fillStyle = 'rgba(255, 165, 0, 0.7)'; ctx.beginPath(); ctx.arc(this.x, this.y, 100, 0, Math.PI*2); ctx.fill();
+                } else this.target.hp -= this.parent.dmg;
+                this.active = false;
+            } else { this.x += (this.target.x-this.x)/d * 10 * gameSpeed; this.y += (this.target.y-this.y)/d * 10 * gameSpeed; }
+        } else {
+            this.t += 0.06 * gameSpeed; 
+            this.x = this.parent.x + Math.cos(this.angle) * Math.sin(this.t) * this.parent.range;
+            this.y = this.parent.y + Math.sin(this.angle) * Math.sin(this.t) * this.parent.range;
+            enemies.forEach(e => { if(Math.hypot(e.x-this.x, e.y-this.y) < 20 && !this.hits.includes(e)) { e.hp -= this.parent.dmg; this.hits.push(e); } });
+            if(this.t > Math.PI) this.active = false;
+        }
+    }
+    draw() { ctx.fillStyle = this.type === 'cannon' ? 'black' : (this.type === 'laser' ? 'yellow' : '#9b59b6'); ctx.beginPath(); ctx.arc(this.x, this.y, 5, 0, Math.PI*2); ctx.fill(); }
+}
+
+canvas.onmousedown = (e) => {
+    let r = canvas.getBoundingClientRect(); let x = e.clientX - r.left; let y = e.clientY - r.top;
+    let found = heroes.find(h => Math.hypot(h.x-x, h.y-y) < 25);
+    if(found) { selectHero(found); return; }
+    if (isTooCloseToPath(x, y)) return;
+    let cost = config[currentTool].cost;
+    if(gold >= cost) { heroes.push(new Hero(x, y, currentTool)); gold -= cost; updateUI(); }
+}
+
+function gameLoop() {
+    if(!isGameRunning) return; 
+    frame++; ctx.clearRect(0,0,800,600);
+    ctx.strokeStyle = '#95a5a6'; ctx.lineWidth = 40; ctx.lineJoin = 'round'; ctx.beginPath();
+    ctx.moveTo(waypoints[0].x, waypoints[0].y); waypoints.forEach(w => ctx.lineTo(w.x, w.y)); ctx.stroke();
+    if (waveActive) {
+        if (frame % Math.floor(60/gameSpeed) === 0 && spawnedInWave < enemiesInWave) { enemies.push(new Enemy(currentWave % 10 === 0 && spawnedInWave === enemiesInWave - 1)); spawnedInWave++; }
+        if (spawnedInWave >= enemiesInWave && enemies.length === 0) { waveActive = false; waveTimer = 180; gold += 50; updateUI(); }
+    } else if ((waveTimer -= gameSpeed) <= 0) { currentWave++; spawnedInWave = 0; waveActive = true; enemiesInWave = 5 + Math.floor(currentWave * 1.5); updateUI(); }
+    heroes.forEach(h => { h.update(); h.draw(); });
+    enemies.forEach((e, i) => { e.update(); e.draw(); if(e.hp <= 0) { enemies.splice(i, 1); gold += e.isBoss ? 100 : 15; updateUI(); } });
+    projectiles.forEach((p, i) => { p.update(); p.draw(); if(!p.active) projectiles.splice(i, 1); });
+    if(lives > 0) requestAnimationFrame(gameLoop); else { alert("Game Over!"); location.reload(); }
+}
+
+function updateUI() { document.getElementById('goldText').innerText = Math.floor(gold); document.getElementById('livesText').innerText = lives; }
+function setTool(t) { currentTool = t; deselectHero(); document.querySelectorAll('.buy-btn').forEach(b => b.classList.remove('active')); document.getElementById(t+'Btn').classList.add('active'); }
+function selectHero(h) { selectedHero = h; document.getElementById('buildMenu').style.display = 'none'; document.getElementById('upgradeMenu').style.display = 'block'; updateUpgradeText(); }
+function deselectHero() { selectedHero = null; document.getElementById('buildMenu').style.display = 'block'; document.getElementById('upgradeMenu').style.display = 'none'; }
+function updateUpgradeText() { if (selectedHero) { document.getElementById('heroStats').innerHTML = `Lvl: ${selectedHero.lvl}<br>Dmg: ${selectedHero.dmg.toFixed(1)}`; document.getElementById('costLabel').innerText = selectedHero.upgradeCost + "g"; } }
+function applyUpgrade() { if (selectedHero && gold >= selectedHero.upgradeCost) { gold -= selectedHero.upgradeCost; selectedHero.lvl++; selectedHero.dmg *= 1.4; selectedHero.upgradeCost = Math.floor(selectedHero.upgradeCost * 1.8); updateUpgradeText(); updateUI(); } }
+</script>
+</body>
+</html>
