@@ -2,10 +2,56 @@
 <html lang="no">
 <head>
     <meta charset="UTF-8">
-    <title>Superhelt TD - Final Balance</title>
+    <title>Superhelt TD - Startmeny</title>
     <style>
-        body { margin: 0; background: #1a1a1a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        #wrapper { display: flex; background: #2c3e50; border: 5px solid #34495e; border-radius: 10px; overflow: hidden; }
+        body { margin: 0; background: #1a1a1a; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        /* --- START SCREEN STYLES --- */
+        #start-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #2c3e50, #000000);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100; /* Ligger oppå alt annet */
+        }
+
+        h1 { font-size: 60px; color: #f1c40f; text-transform: uppercase; margin-bottom: 10px; text-shadow: 4px 4px #000; }
+        p.subtitle { color: #bdc3c7; font-size: 18px; margin-bottom: 40px; }
+
+        .map-container { display: flex; gap: 20px; }
+        
+        .map-card {
+            background: #34495e;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 3px solid #7f8c8d;
+            width: 150px;
+            transition: 0.3s;
+        }
+
+        .map-card.active { border-color: #27ae60; cursor: pointer; box-shadow: 0 0 15px rgba(39, 174, 96, 0.5); }
+        .map-card.active:hover { transform: scale(1.05); background: #2c3e50; }
+        .map-card.locked { opacity: 0.5; cursor: not-allowed; border-color: #444; }
+
+        .btn-play {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* --- GAME UI (Skjult i starten) --- */
+        #game-ui { display: none; } /* Vi skjuler hele spillet til man trykker play */
+        
+        #wrapper { display: flex; background: #2c3e50; border: 5px solid #34495e; border-radius: 10px; overflow: hidden; position: relative; }
         canvas { background: #27ae60; cursor: pointer; }
         #sidebar { width: 250px; padding: 20px; background: #34495e; display: flex; flex-direction: column; gap: 15px; }
         .stats { font-size: 18px; font-weight: bold; color: #f1c40f; }
@@ -15,31 +61,62 @@
         .upgrade-container { border-top: 2px solid #2c3e50; padding-top: 15px; display: none; }
         .upgrade-btn { background: #2ecc71; color: white; font-size: 16px; }
         .cancel-btn { background: #e74c3c; color: white; }
+        .quit-btn { background: #c0392b; color: white; margin-top: auto; } /* Knapp for å gå tilbake til meny */
         small { display: block; font-size: 11px; color: #7f8c8d; }
-        #wave-alert { position: absolute; top: 20px; font-size: 24px; font-weight: bold; color: #f1c40f; text-shadow: 2px 2px #000; pointer-events: none; }
+        #wave-alert { position: absolute; top: 20px; left: 20px; font-size: 24px; font-weight: bold; color: #f1c40f; text-shadow: 2px 2px #000; pointer-events: none; z-index: 10; }
     </style>
 </head>
 <body>
 
-<div id="wave-alert">Wave 1</div>
-<div id="wrapper">
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
-    <div id="sidebar">
-        <div class="stats">💰 Gull: <span id="goldText">150</span></div>
-        <div class="stats">❤️ Liv: <span id="livesText">10</span></div>
-        <div class="stats">⚔️ Wave: <span id="waveText">1</span></div>
+<div id="start-screen">
+    <h1>Superhelt TD</h1>
+    <p class="subtitle">Velg et kart for å starte</p>
 
-        <div id="buildMenu">
-            <h3 style="margin:0 0 10px 0">Butikk</h3>
-            <button class="btn buy-btn active" id="laserBtn" onclick="setTool('laser')">LASER HELT<br><small>50 Gull</small></button>
-            <button class="btn buy-btn" id="boomBtn" onclick="setTool('boom')">BOOMERANG<br><small>120 Gull - Skade: 3.5</small></button>
+    <div class="map-container">
+        <div class="map-card active" onclick="startGame(1)">
+            <div style="font-size: 40px;">🌲</div>
+            <h3>Gressletten</h3>
+            <p style="font-size:12px; color:#bdc3c7;">Standard kart</p>
+            <button class="btn-play">SPILL</button>
         </div>
 
-        <div id="upgradeMenu" class="upgrade-container">
-            <h3 id="heroTitle" style="margin:0">Oppgrader</h3>
-            <p id="heroStats" style="font-size:13px"></p>
-            <button class="btn upgrade-btn" onclick="applyUpgrade()">OPPGRADER <br><span id="costLabel"></span></button>
-            <button class="btn cancel-btn" onclick="deselectHero()">AVBRYT</button>
+        <div class="map-card locked">
+            <div style="font-size: 40px;">🏜️</div>
+            <h3>Ørkenen</h3>
+            <p style="font-size:12px; color:#bdc3c7;">Kommer snart...</p>
+        </div>
+
+        <div class="map-card locked">
+            <div style="font-size: 40px;">🌋</div>
+            <h3>Vulkanen</h3>
+            <p style="font-size:12px; color:#bdc3c7;">Kommer snart...</p>
+        </div>
+    </div>
+</div>
+
+<div id="game-ui">
+    <div id="wrapper">
+        <div id="wave-alert">Wave 1</div>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="sidebar">
+            <div class="stats">💰 Gull: <span id="goldText">150</span></div>
+            <div class="stats">❤️ Liv: <span id="livesText">10</span></div>
+            <div class="stats">⚔️ Wave: <span id="waveText">1</span></div>
+
+            <div id="buildMenu">
+                <h3 style="margin:0 0 10px 0">Butikk</h3>
+                <button class="btn buy-btn active" id="laserBtn" onclick="setTool('laser')">LASER HELT<br><small>50 Gull</small></button>
+                <button class="btn buy-btn" id="boomBtn" onclick="setTool('boom')">BOOMERANG<br><small>120 Gull - Dmg 3.5</small></button>
+            </div>
+
+            <div id="upgradeMenu" class="upgrade-container">
+                <h3 id="heroTitle" style="margin:0">Oppgrader</h3>
+                <p id="heroStats" style="font-size:13px"></p>
+                <button class="btn upgrade-btn" onclick="applyUpgrade()">OPPGRADER <br><span id="costLabel"></span></button>
+                <button class="btn cancel-btn" onclick="deselectHero()">AVBRYT</button>
+            </div>
+
+            <button class="btn quit-btn" onclick="goToMenu()">TILBAKE TIL MENY</button>
         </div>
     </div>
 </div>
@@ -48,26 +125,63 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// --- SPILLVARIABLER ---
-let gold = 150;
-let lives = 10;
-let currentTool = 'laser';
-let selectedHero = null;
-let frame = 0;
+// Game State
+let isGameRunning = false;
+let animationId;
 
-// Wave system
-let currentWave = 1;
-let enemiesInWave = 0;
-let spawnedInWave = 0;
-let waveActive = true;
-let waveTimer = 0;
+// Spillvariabler
+let gold = 150, lives = 10, currentTool = 'laser', selectedHero = null, frame = 0;
+let currentWave = 1, enemiesInWave = 0, spawnedInWave = 0, waveActive = true, waveTimer = 0;
 
-const heroes = [];
-const enemies = [];
-const projectiles = [];
-const waypoints = [{x:0, y:100}, {x:700, y:100}, {x:700, y:300}, {x:100, y:300}, {x:100, y:500}, {x:850, y:500}];
+// Arrays
+let heroes = [];
+let enemies = [];
+let projectiles = [];
 
-// --- UI FUNKSJONER ---
+// Waypoints (Kan byttes ut senere når vi lager nye maps)
+const waypointsMap1 = [{x:0, y:100}, {x:700, y:100}, {x:700, y:300}, {x:100, y:300}, {x:100, y:500}, {x:850, y:500}];
+let currentWaypoints = waypointsMap1;
+
+// --- START / STOPP LOGIKK ---
+
+function startGame(mapId) {
+    // 1. Bytt skjerm
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('game-ui').style.display = 'flex';
+
+    // 2. Nullstill alt
+    gold = 150;
+    lives = 10;
+    frame = 0;
+    currentWave = 1;
+    heroes = [];
+    enemies = [];
+    projectiles = [];
+    waveActive = true;
+    spawnedInWave = 0;
+    enemiesInWave = 5;
+    
+    // 3. Start loopen
+    isGameRunning = true;
+    updateUI();
+    gameLoop();
+}
+
+function goToMenu() {
+    isGameRunning = false;
+    cancelAnimationFrame(animationId); // Stopp loopen
+    document.getElementById('game-ui').style.display = 'none';
+    document.getElementById('start-screen').style.display = 'flex';
+}
+
+// --- UI OPPDATERING ---
+function updateUI() {
+    document.getElementById('goldText').innerText = Math.floor(gold);
+    document.getElementById('livesText').innerText = lives;
+    document.getElementById('waveText').innerText = currentWave;
+    document.getElementById('wave-alert').innerText = "Wave " + currentWave;
+}
+
 function setTool(t) {
     currentTool = t;
     deselectHero();
@@ -99,18 +213,17 @@ function applyUpgrade() {
         gold -= selectedHero.upgradeCost;
         selectedHero.lvl++;
         
-        // --- SPESIFIKK OPPGRADERINGSLOGIKK ---
+        // Din balansering:
         if (selectedHero.type === 'boom') {
-            // Boomerang øker med 1.5 per level (3.5 -> 5.0 -> 6.5)
-            selectedHero.dmg += 1.5; 
+            selectedHero.dmg += 1.5; // (3.5 -> 5.0)
             selectedHero.range += 15;
         } else {
-            // Laser bruker prosentvis økning
             selectedHero.dmg *= 1.4; 
         }
 
         selectedHero.upgradeCost = Math.floor(selectedHero.upgradeCost * 1.8);
         updateUpgradeText();
+        updateUI();
     }
 }
 
@@ -121,18 +234,9 @@ class Hero {
         this.lvl = 1; this.cd = 0;
         
         if(type === 'laser') {
-            this.dmg = 3; 
-            this.range = 130; 
-            this.speed = 30; 
-            this.color = '#e74c3c'; 
-            this.upgradeCost = 40;
+            this.dmg = 3; this.range = 130; this.speed = 30; this.color = '#e74c3c'; this.upgradeCost = 40;
         } else {
-            // HER ER ENDRINGEN: Startskade 3.5
-            this.dmg = 3.5; 
-            this.range = 120; 
-            this.speed = 60; 
-            this.color = '#9b59b6'; 
-            this.upgradeCost = 70; // Oppgraderingskostnad justert for å balansere
+            this.dmg = 3.5; this.range = 120; this.speed = 60; this.color = '#9b59b6'; this.upgradeCost = 70;
         }
     }
     draw() {
@@ -160,22 +264,22 @@ class Hero {
 
 class Enemy {
     constructor(isBoss = false) {
-        this.wp = 0; this.x = waypoints[0].x; this.y = waypoints[0].y;
+        this.wp = 0; this.x = currentWaypoints[0].x; this.y = currentWaypoints[0].y;
         this.isBoss = isBoss;
         this.radius = isBoss ? 30 : 12;
         this.color = isBoss ? '#c0392b' : '#2c3e50';
         
         let baseHp = isBoss ? 200 : 5;
-        this.hp = baseHp + (currentWave * (isBoss ? 60 : 3)); // Litt mer HP siden vi økte dmg
+        this.hp = baseHp + (currentWave * (isBoss ? 60 : 3));
         this.maxHp = this.hp;
         this.speed = isBoss ? 0.6 : (1.2 + Math.random() * 0.5);
     }
     update() {
-        let t = waypoints[this.wp + 1];
+        let t = currentWaypoints[this.wp + 1];
         let d = Math.hypot(t.x-this.x, t.y-this.y);
         if(d < 5) this.wp++;
         else { this.x += (t.x-this.x)/d * this.speed; this.y += (t.y-this.y)/d * this.speed; }
-        if(this.wp >= waypoints.length-1) { lives--; enemies.splice(enemies.indexOf(this), 1); }
+        if(this.wp >= currentWaypoints.length-1) { lives--; enemies.splice(enemies.indexOf(this), 1); updateUI(); }
     }
     draw() {
         ctx.fillStyle = this.color;
@@ -193,6 +297,7 @@ class Projectile {
     }
     update() {
         if(this.type === 'laser') {
+            if(!this.target || this.target.hp <= 0) { this.active = false; return; }
             let d = Math.hypot(this.target.x-this.x, this.target.y-this.y);
             if(d < 10) { this.target.hp -= this.parent.dmg; this.active = false; }
             else { this.x += (this.target.x-this.x)/d * 10; this.y += (this.target.y-this.y)/d * 10; }
@@ -212,14 +317,7 @@ class Projectile {
     }
 }
 
-function startNextWave() {
-    currentWave++;
-    spawnedInWave = 0;
-    waveActive = true;
-    enemiesInWave = 5 + Math.floor(currentWave * 1.5);
-    document.getElementById('wave-alert').innerText = "Wave " + currentWave + (currentWave % 15 === 0 ? " - BOSS!" : "");
-}
-
+// --- SPILL LOOP ---
 canvas.onmousedown = (e) => {
     let r = canvas.getBoundingClientRect();
     let x = e.clientX - r.left;
@@ -227,31 +325,40 @@ canvas.onmousedown = (e) => {
     let found = heroes.find(h => Math.hypot(h.x-x, h.y-y) < 25);
     if(found) { selectHero(found); return; }
     let cost = currentTool === 'laser' ? 50 : 120;
-    if(gold >= cost) { heroes.push(new Hero(x, y, currentTool)); gold -= cost; }
+    if(gold >= cost) { heroes.push(new Hero(x, y, currentTool)); gold -= cost; updateUI(); }
+}
+
+function startNextWave() {
+    currentWave++;
+    spawnedInWave = 0;
+    waveActive = true;
+    enemiesInWave = 5 + Math.floor(currentWave * 1.5);
+    updateUI();
+    if(currentWave % 15 === 0) document.getElementById('wave-alert').innerText = "BOSS WAVE!";
 }
 
 function gameLoop() {
+    if(!isGameRunning) return; // Stopp hvis vi er i menyen
+
     frame++;
     ctx.clearRect(0,0,800,600);
     
     // Tegn vei
     ctx.strokeStyle = '#95a5a6'; ctx.lineWidth = 40; ctx.lineJoin = 'round'; ctx.beginPath();
-    ctx.moveTo(waypoints[0].x, waypoints[0].y); waypoints.forEach(w => ctx.lineTo(w.x, w.y)); ctx.stroke();
+    ctx.moveTo(currentWaypoints[0].x, currentWaypoints[0].y); 
+    currentWaypoints.forEach(w => ctx.lineTo(w.x, w.y)); ctx.stroke();
 
-    // Wave logikk
+    // Wave Logikk
     if (waveActive) {
         if (frame % 60 === 0 && spawnedInWave < enemiesInWave) {
-            if (currentWave % 15 === 0 && spawnedInWave === enemiesInWave - 1) {
-                enemies.push(new Enemy(true)); 
-            } else {
-                enemies.push(new Enemy(false));
-            }
+            let isBoss = (currentWave % 15 === 0 && spawnedInWave === enemiesInWave - 1);
+            enemies.push(new Enemy(isBoss));
             spawnedInWave++;
         }
         if (spawnedInWave >= enemiesInWave && enemies.length === 0) {
             waveActive = false;
-            waveTimer = 180; // 3 sek pause
-            gold += 50; 
+            waveTimer = 180;
+            gold += 50; updateUI();
         }
     } else {
         waveTimer--;
@@ -264,21 +371,18 @@ function gameLoop() {
         if(e.hp <= 0) { 
             enemies.splice(i, 1); 
             gold += e.isBoss ? 100 : 15; 
+            updateUI(); 
         } 
     });
     projectiles.forEach((p, i) => { p.update(); p.draw(); if(!p.active) projectiles.splice(i, 1); });
 
-    document.getElementById('goldText').innerText = Math.floor(gold);
-    document.getElementById('livesText').innerText = lives;
-    document.getElementById('waveText').innerText = currentWave;
-
-    if(lives > 0) requestAnimationFrame(gameLoop);
-    else { ctx.fillStyle = "rgba(0,0,0,0.8)"; ctx.fillRect(0,0,800,600); ctx.fillStyle="white"; ctx.font="40px Arial"; ctx.fillText("GAME OVER", 280, 300); }
+    if(lives > 0) {
+        animationId = requestAnimationFrame(gameLoop);
+    } else {
+        alert("Game Over! Du kom til wave " + currentWave);
+        goToMenu();
+    }
 }
-
-// Start
-enemiesInWave = 5;
-gameLoop();
 </script>
 </body>
 </html>
