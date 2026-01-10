@@ -2,7 +2,7 @@
 <html lang="no">
 <head>
     <meta charset="UTF-8">
-    <title>Superhelt TD - Utfordringen</title>
+    <title>Superhelt TD - Eksplosiv Oppdatering</title>
     <style>
         body { margin: 0; background: #1a1a1a; color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
         
@@ -51,10 +51,9 @@
 
     <div id="diff-select" class="menu-box" style="display:none;">
         <h2 style="color:#f1c40f">Velg vanskelighetsgrad</h2>
-        <button class="diff-btn easy" onclick="startGame('easy')">LETT (300g / 20 liv)</button>
-        <button class="diff-btn medium" onclick="startGame('medium')">NORMAL (150g / 10 liv)</button>
-        <button class="diff-btn hard" onclick="startGame('hard')">VANSKELIG (100g / 5 liv)</button>
-        <button style="background:none; border:none; color:#bdc3c7; cursor:pointer; margin-top:10px;" onclick="hideDifficulty()">← Tilbake</button>
+        <button class="diff-btn easy" onclick="startGame('easy')">LETT</button>
+        <button class="diff-btn medium" onclick="startGame('medium')">NORMAL</button>
+        <button class="diff-btn hard" onclick="startGame('hard')">VANSKELIG</button>
     </div>
 </div>
 
@@ -68,12 +67,11 @@
                 <button class="speed-btn" id="sp2" onclick="setSpeed(2)">2x</button>
                 <button class="speed-btn" id="sp4" onclick="setSpeed(4)">4x</button>
             </div>
-            <div class="stats" style="font-size: 14px;">⚔️ Wave: <span id="waveText">1</span></div>
             
             <div id="buildMenu">
                 <button class="btn buy-btn active" id="laserBtn" onclick="setTool('laser')">LASER <span style="float:right">50g</span></button>
                 <button class="btn buy-btn" id="boomBtn" onclick="setTool('boom')">BOOMERANG <span style="float:right">120g</span></button>
-                <button class="btn buy-btn" id="cannonBtn" onclick="setTool('cannon')">KANON <span style="float:right" id="ui-cannon-cost">200g</span></button>
+                <button class="btn buy-btn" id="cannonBtn" onclick="setTool('cannon')">KANON <span style="float:right">200g</span></button>
             </div>
 
             <div id="upgradeMenu" style="display:none;">
@@ -92,26 +90,32 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 let config = {
-    laser: { dmg: 3, range: 130, speed: 30, cost: 50 },
+    laser: { dmg: 2, range: 130, speed: 30, cost: 50 }, // Laserskade satt til 2
     boom: { dmg: 4, range: 120, speed: 60, cost: 120 },
-    cannon: { dmg: 20, range: 150, speed: 150, cost: 200 } // Oppdatert her
+    cannon: { dmg: 20, range: 150, speed: 150, cost: 200 }
 };
 
 let isGameRunning = false, gameSpeed = 1, gold = 150, lives = 10;
-let currentTool = 'laser', selectedHero = null, currentWave = 1;
-let spawnedInWave = 0, enemiesInWave = 5, waveActive = true, waveTimer = 0, frame = 0;
-let heroes = [], enemies = [], projectiles = [];
+let currentTool = 'laser', selectedHero = null, currentWave = 1, frame = 0;
+let heroes = [], enemies = [], projectiles = [], waveActive = true, waveTimer = 0, spawnedInWave = 0, enemiesInWave = 5;
 
 const waypoints = [{x:0, y:100}, {x:700, y:100}, {x:700, y:300}, {x:100, y:300}, {x:100, y:500}, {x:850, y:500}];
 
-function showDifficulty() {
-    document.getElementById('map-select').style.display = 'none';
-    document.getElementById('diff-select').style.display = 'block';
+function showDifficulty() { document.getElementById('map-select').style.display = 'none'; document.getElementById('diff-select').style.display = 'block'; }
+
+function startGame(diff) {
+    if(diff === 'easy') { gold = 300; lives = 20; }
+    else if(diff === 'hard') { gold = 100; lives = 5; }
+    else { gold = 150; lives = 10; }
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('game-ui').style.display = 'flex';
+    isGameRunning = true; updateUI(); gameLoop();
 }
 
-function hideDifficulty() {
-    document.getElementById('map-select').style.display = 'block';
-    document.getElementById('diff-select').style.display = 'none';
+function setSpeed(s) {
+    gameSpeed = s;
+    document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('sp' + s).classList.add('active');
 }
 
 function isTooCloseToPath(x, y) {
@@ -131,74 +135,6 @@ function isTooCloseToPath(x, y) {
     return false;
 }
 
-function startGame(difficulty) {
-    if (difficulty === 'easy') { gold = 300; lives = 20; }
-    else if (difficulty === 'medium') { gold = 150; lives = 10; }
-    else { gold = 100; lives = 5; }
-
-    document.getElementById('start-screen').style.display = 'none';
-    document.getElementById('game-ui').style.display = 'flex';
-    
-    currentWave = 1; heroes = []; enemies = []; projectiles = [];
-    spawnedInWave = 0; enemiesInWave = 5; waveActive = true;
-    isGameRunning = true; updateUI(); gameLoop();
-}
-
-function setSpeed(s) {
-    gameSpeed = s;
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('sp' + s).classList.add('active');
-}
-
-function goToMenu() {
-    isGameRunning = false;
-    document.getElementById('game-ui').style.display = 'none';
-    document.getElementById('start-screen').style.display = 'flex';
-    hideDifficulty();
-}
-
-function setTool(t) {
-    currentTool = t;
-    deselectHero();
-    document.querySelectorAll('.buy-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(t+'Btn').classList.add('active');
-}
-
-function selectHero(h) {
-    selectedHero = h;
-    document.getElementById('buildMenu').style.display = 'none';
-    document.getElementById('upgradeMenu').style.display = 'block';
-    updateUpgradeText();
-}
-
-function deselectHero() {
-    selectedHero = null;
-    document.getElementById('buildMenu').style.display = 'block';
-    document.getElementById('upgradeMenu').style.display = 'none';
-}
-
-function updateUpgradeText() {
-    if (!selectedHero) return;
-    document.getElementById('heroStats').innerHTML = `Lvl: ${selectedHero.lvl}<br>Dmg: ${selectedHero.dmg.toFixed(1)}<br>Range: ${selectedHero.range}`;
-    document.getElementById('costLabel').innerText = selectedHero.upgradeCost + "g";
-}
-
-function updateUI() {
-    document.getElementById('goldText').innerText = Math.floor(gold);
-    document.getElementById('livesText').innerText = lives;
-    document.getElementById('waveText').innerText = currentWave;
-}
-
-function applyUpgrade() {
-    if (selectedHero && gold >= selectedHero.upgradeCost) {
-        gold -= selectedHero.upgradeCost; selectedHero.lvl++;
-        if (selectedHero.type === 'boom') { selectedHero.dmg += 1.5; selectedHero.range += 15; }
-        else { selectedHero.dmg *= 1.4; selectedHero.range += 10; }
-        selectedHero.upgradeCost = Math.floor(selectedHero.upgradeCost * 1.8);
-        updateUpgradeText(); updateUI();
-    }
-}
-
 class Hero {
     constructor(x, y, type) {
         this.x = x; this.y = y; this.type = type; this.lvl = 1; this.cd = 0;
@@ -212,7 +148,6 @@ class Hero {
         if(this.type === 'cannon') { ctx.fillStyle = 'black'; ctx.beginPath(); ctx.arc(this.x, this.y, 8, 0, Math.PI*2); ctx.fill(); }
         ctx.fillStyle = "white"; ctx.font = "bold 12px Arial"; ctx.fillText(this.lvl, this.x-4, this.y+5);
         if (selectedHero === this) {
-            ctx.strokeStyle = "white"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(this.x, this.y, 22, 0, Math.PI*2); ctx.stroke();
             ctx.strokeStyle = "rgba(255,255,255,0.2)"; ctx.beginPath(); ctx.arc(this.x, this.y, this.range, 0, Math.PI*2); ctx.stroke();
         }
     }
@@ -234,10 +169,7 @@ class Enemy {
     }
     update() {
         let t = waypoints[this.wp + 1]; let d = Math.hypot(t.x-this.x, t.y-this.y);
-        if(d < 5) this.wp++; else { 
-            this.x += (t.x-this.x)/d * this.speed * gameSpeed; 
-            this.y += (t.y-this.y)/d * this.speed * gameSpeed; 
-        }
+        if(d < 5) this.wp++; else { this.x += (t.x-this.x)/d * this.speed * gameSpeed; this.y += (t.y-this.y)/d * this.speed * gameSpeed; }
         if(this.wp >= waypoints.length-1) { lives--; enemies.splice(enemies.indexOf(this), 1); updateUI(); }
     }
     draw() {
@@ -257,13 +189,12 @@ class Projectile {
             let d = Math.hypot(this.target.x-this.x, this.target.y-this.y);
             if(d < 10) {
                 if(this.type === 'cannon') {
-                    enemies.forEach(e => { if(Math.hypot(e.x - this.x, e.y - this.y) < 60) e.hp -= this.parent.dmg; });
+                    // STØRRE EKSPLOSJON: 100 piksler radius
+                    enemies.forEach(e => { if(Math.hypot(e.x - this.x, e.y - this.y) < 100) e.hp -= this.parent.dmg; });
+                    ctx.fillStyle = 'rgba(255, 165, 0, 0.7)'; ctx.beginPath(); ctx.arc(this.x, this.y, 100, 0, Math.PI*2); ctx.fill();
                 } else this.target.hp -= this.parent.dmg;
                 this.active = false;
-            } else { 
-                this.x += (this.target.x-this.x)/d * 10 * gameSpeed; 
-                this.y += (this.target.y-this.y)/d * 10 * gameSpeed; 
-            }
+            } else { this.x += (this.target.x-this.x)/d * 10 * gameSpeed; this.y += (this.target.y-this.y)/d * 10 * gameSpeed; }
         } else {
             this.t += 0.06 * gameSpeed; 
             this.x = this.parent.x + Math.cos(this.angle) * Math.sin(this.t) * this.parent.range;
@@ -289,24 +220,23 @@ function gameLoop() {
     frame++; ctx.clearRect(0,0,800,600);
     ctx.strokeStyle = '#95a5a6'; ctx.lineWidth = 40; ctx.lineJoin = 'round'; ctx.beginPath();
     ctx.moveTo(waypoints[0].x, waypoints[0].y); waypoints.forEach(w => ctx.lineTo(w.x, w.y)); ctx.stroke();
-    
     if (waveActive) {
-        if (frame % Math.floor(60/gameSpeed) === 0 && spawnedInWave < enemiesInWave) { 
-            enemies.push(new Enemy(currentWave % 15 === 0 && spawnedInWave === enemiesInWave - 1)); 
-            spawnedInWave++; 
-        }
+        if (frame % Math.floor(60/gameSpeed) === 0 && spawnedInWave < enemiesInWave) { enemies.push(new Enemy(currentWave % 15 === 0 && spawnedInWave === enemiesInWave - 1)); spawnedInWave++; }
         if (spawnedInWave >= enemiesInWave && enemies.length === 0) { waveActive = false; waveTimer = 180; gold += 50; updateUI(); }
-    } else {
-        waveTimer -= gameSpeed;
-        if (waveTimer <= 0) { currentWave++; spawnedInWave = 0; waveActive = true; enemiesInWave = 5 + Math.floor(currentWave * 1.5); updateUI(); }
-    }
-    
+    } else if ((waveTimer -= gameSpeed) <= 0) { currentWave++; spawnedInWave = 0; waveActive = true; enemiesInWave = 5 + Math.floor(currentWave * 1.5); updateUI(); }
     heroes.forEach(h => { h.update(); h.draw(); });
     enemies.forEach((e, i) => { e.update(); e.draw(); if(e.hp <= 0) { enemies.splice(i, 1); gold += e.isBoss ? 100 : 15; updateUI(); } });
     projectiles.forEach((p, i) => { p.update(); p.draw(); if(!p.active) projectiles.splice(i, 1); });
-    
-    if(lives > 0) requestAnimationFrame(gameLoop); else { alert("Game Over!"); goToMenu(); }
+    if(lives > 0) requestAnimationFrame(gameLoop); else { alert("Game Over!"); location.reload(); }
 }
+
+function updateUI() { document.getElementById('goldText').innerText = Math.floor(gold); document.getElementById('livesText').innerText = lives; }
+function setTool(t) { currentTool = t; deselectHero(); document.querySelectorAll('.buy-btn').forEach(b => b.classList.remove('active')); document.getElementById(t+'Btn').classList.add('active'); }
+function selectHero(h) { selectedHero = h; document.getElementById('buildMenu').style.display = 'none'; document.getElementById('upgradeMenu').style.display = 'block'; updateUpgradeText(); }
+function deselectHero() { selectedHero = null; document.getElementById('buildMenu').style.display = 'block'; document.getElementById('upgradeMenu').style.display = 'none'; }
+function updateUpgradeText() { if (selectedHero) { document.getElementById('heroStats').innerHTML = `Lvl: ${selectedHero.lvl}<br>Dmg: ${selectedHero.dmg.toFixed(1)}`; document.getElementById('costLabel').innerText = selectedHero.upgradeCost + "g"; } }
+function applyUpgrade() { if (selectedHero && gold >= selectedHero.upgradeCost) { gold -= selectedHero.upgradeCost; selectedHero.lvl++; selectedHero.dmg *= 1.4; selectedHero.upgradeCost = Math.floor(selectedHero.upgradeCost * 1.8); updateUpgradeText(); updateUI(); } }
+function goToMenu() { location.reload(); }
 </script>
 </body>
 </html>
