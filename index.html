@@ -2,7 +2,7 @@
 <html lang="no">
 <head>
     <meta charset="UTF-8">
-    <title>Superhelt TD - Balansert Økonomi</title>
+    <title>Superhelt TD - Ultimate Control</title>
     <style>
         body { margin: 0; background: #1a1a1a; color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
         
@@ -11,11 +11,8 @@
             background: linear-gradient(135deg, #2c3e50, #000000);
             display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100;
         }
-        .menu-box { background: #34495e; padding: 30px; border-radius: 15px; text-align: center; border: 3px solid #f1c40f; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        .diff-btn { display: block; width: 200px; padding: 15px; margin: 10px auto; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.2s; }
-        .easy { background: #2ecc71; color: white; }
-        .medium { background: #f1c40f; color: black; }
-        .hard { background: #e74c3c; color: white; }
+        .menu-box { background: #34495e; padding: 30px; border-radius: 15px; text-align: center; border: 3px solid #f1c40f; }
+        .diff-btn { display: block; width: 200px; padding: 15px; margin: 10px auto; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
 
         #game-ui { display: none; flex-direction: column; align-items: center; }
         #wrapper { display: flex; background: #2c3e50; border: 5px solid #34495e; border-radius: 10px; overflow: hidden; position: relative; }
@@ -23,31 +20,37 @@
         #sidebar { width: 250px; padding: 20px; background: #34495e; display: flex; flex-direction: column; gap: 10px; }
         
         .stats { font-size: 18px; font-weight: bold; color: #f1c40f; }
-        .btn { width: 100%; padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 5px; }
-        .buy-btn { background: #ecf0f1; color: #2c3e50; text-align: left; }
+        .btn { width: 100%; padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .buy-btn { background: #ecf0f1; color: #2c3e50; text-align: left; margin-bottom: 5px; }
         .buy-btn.active { outline: 3px solid #f1c40f; background: #fff; }
         
         .speed-container { display: flex; gap: 5px; margin-bottom: 10px; }
-        .speed-btn { flex: 1; background: #95a5a6; color: white; padding: 5px; font-size: 12px; border-radius: 3px; border: none; cursor: pointer; }
+        .speed-btn { flex: 1; background: #95a5a6; color: white; padding: 5px; border: none; cursor: pointer; border-radius: 3px; }
         .speed-btn.active { background: #f1c40f; color: black; }
 
-        .quit-btn { background: #c0392b; color: white; margin-top: auto; }
+        /* DEV PANEL */
+        #dev-panel {
+            margin-top: 15px; background: #2c3e50; padding: 15px; border-radius: 10px; border: 2px solid #f1c40f;
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 1000px;
+        }
+        .dev-group { background: #34495e; padding: 10px; border-radius: 5px; border: 1px solid #444; }
+        .dev-group h4 { margin: 0 0 8px 0; color: #f1c40f; font-size: 14px; }
+        .dev-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 11px; }
+        .dev-input { width: 45px; padding: 2px; border-radius: 3px; border: none; text-align: center; }
     </style>
 </head>
 <body>
 
 <div id="start-screen">
     <div id="map-select" class="menu-box">
-        <h1 style="color:#f1c40f">Superhelt TD</h1>
-        <p>Velg et kart for å fortsette:</p>
+        <h1>Superhelt TD</h1>
         <div style="background:#2ecc71; padding:20px; border-radius:10px; cursor:pointer;" onclick="showDifficulty()">
             <div style="font-size: 40px;">🌲</div>
             <h3>Gressletten</h3>
         </div>
     </div>
-
     <div id="diff-select" class="menu-box" style="display:none;">
-        <h2 style="color:#f1c40f">Velg vanskelighetsgrad</h2>
+        <h2>Velg vanskelighetsgrad</h2>
         <button class="diff-btn easy" onclick="startGame('easy')">LETT</button>
         <button class="diff-btn medium" onclick="startGame('medium')">NORMAL</button>
         <button class="diff-btn hard" onclick="startGame('hard')">VANSKELIG</button>
@@ -64,20 +67,46 @@
                 <button class="speed-btn" id="sp2" onclick="setSpeed(2)">2x</button>
                 <button class="speed-btn" id="sp4" onclick="setSpeed(4)">4x</button>
             </div>
-            
             <div id="buildMenu">
-                <button class="btn buy-btn active" id="laserBtn" onclick="setTool('laser')">LASER <span style="float:right">50g</span></button>
-                <button class="btn buy-btn" id="boomBtn" onclick="setTool('boom')">BOOMERANG <span style="float:right">100g</span></button>
-                <button class="btn buy-btn" id="cannonBtn" onclick="setTool('cannon')">KANON <span style="float:right">400g</span></button>
+                <button class="btn buy-btn active" id="laserBtn" onclick="setTool('laser')">LASER <span id="pL_ui" style="float:right">50g</span></button>
+                <button class="btn buy-btn" id="boomBtn" onclick="setTool('boom')">BOOMERANG <span id="pB_ui" style="float:right">100g</span></button>
+                <button class="btn buy-btn" id="cannonBtn" onclick="setTool('cannon')">KANON <span id="pC_ui" style="float:right">400g</span></button>
             </div>
-
             <div id="upgradeMenu" style="display:none;">
                 <h3 id="heroTitle" style="margin:0; font-size:16px;">Oppgrader</h3>
                 <p id="heroStats" style="font-size:12px;"></p>
                 <button class="btn" style="background:#2ecc71; color:white;" onclick="applyUpgrade()">OPPGRADER <span id="costLabel"></span></button>
-                <button class="btn" style="background:#e74c3c; color:white;" onclick="deselectHero()">LUKK</button>
+                <button class="btn" style="background:#e74c3c; color:white; margin-top:5px;" onclick="deselectHero()">LUKK</button>
             </div>
-            <button class="btn quit-btn" onclick="goToMenu()">MENY</button>
+            <button class="btn" style="background:#c0392b; color:white; margin-top:auto;" onclick="location.reload()">MENY</button>
+        </div>
+    </div>
+
+    <div id="dev-panel">
+        <div class="dev-group">
+            <h4>🔴 LASER</h4>
+            <div class="dev-row"><label>Dmg:</label><input type="number" id="dL" class="dev-input" value="2"></div>
+            <div class="dev-row"><label>Pris:</label><input type="number" id="pL" class="dev-input" value="50"></div>
+            <div class="dev-row"><label>Speed:</label><input type="number" id="sL" class="dev-input" value="30"></div>
+        </div>
+        <div class="dev-group">
+            <h4>🟣 BOOM</h4>
+            <div class="dev-row"><label>Dmg:</label><input type="number" id="dB" class="dev-input" value="4"></div>
+            <div class="dev-row"><label>Pris:</label><input type="number" id="pB" class="dev-input" value="100"></div>
+            <div class="dev-row"><label>Speed:</label><input type="number" id="sB" class="dev-input" value="60"></div>
+        </div>
+        <div class="dev-group">
+            <h4>⚫ KANON</h4>
+            <div class="dev-row"><label>Dmg:</label><input type="number" id="dC" class="dev-input" value="20"></div>
+            <div class="dev-row"><label>Pris:</label><input type="number" id="pC" class="dev-input" value="400"></div>
+            <div class="dev-row"><label>Speed:</label><input type="number" id="sC" class="dev-input" value="150"></div>
+        </div>
+        <div class="dev-group">
+            <h4>👾 ENEMIES</h4>
+            <div class="dev-row"><label>Start HP:</label><input type="number" id="eHP" class="dev-input" value="5"></div>
+            <div class="dev-row"><label>HP Scale:</label><input type="number" id="eScale" class="dev-input" value="3"></div>
+            <div class="dev-row"><label>Base Speed:</label><input type="number" step="0.1" id="eSpeed" class="dev-input" value="1.2"></div>
+            <button class="btn" style="background:#f1c40f; font-size:10px; padding:5px; margin-top:5px;" onclick="updateDevStats()">OPPDATER ALT</button>
         </div>
     </div>
 </div>
@@ -88,8 +117,9 @@ const ctx = canvas.getContext('2d');
 
 let config = {
     laser: { dmg: 2, range: 130, speed: 30, cost: 50 },
-    boom: { dmg: 4, range: 120, speed: 60, cost: 100 }, // Boomerang satt ned til 100
-    cannon: { dmg: 20, range: 150, speed: 150, cost: 400 } // Kanon opp til 400
+    boom: { dmg: 4, range: 120, speed: 60, cost: 100 },
+    cannon: { dmg: 20, range: 150, speed: 150, cost: 400 },
+    enemy: { hpBase: 5, hpScale: 3, speed: 1.2 }
 };
 
 let isGameRunning = false, gameSpeed = 1, gold = 150, lives = 10;
@@ -98,8 +128,29 @@ let heroes = [], enemies = [], projectiles = [], waveActive = true, waveTimer = 
 
 const waypoints = [{x:0, y:100}, {x:700, y:100}, {x:700, y:300}, {x:100, y:300}, {x:100, y:500}, {x:850, y:500}];
 
-function showDifficulty() { document.getElementById('map-select').style.display = 'none'; document.getElementById('diff-select').style.display = 'block'; }
+function updateDevStats() {
+    config.laser.dmg = parseFloat(document.getElementById('dL').value);
+    config.laser.cost = parseFloat(document.getElementById('pL').value);
+    config.laser.speed = parseFloat(document.getElementById('sL').value);
+    
+    config.boom.dmg = parseFloat(document.getElementById('dB').value);
+    config.boom.cost = parseFloat(document.getElementById('pB').value);
+    config.boom.speed = parseFloat(document.getElementById('sB').value);
+    
+    config.cannon.dmg = parseFloat(document.getElementById('dC').value);
+    config.cannon.cost = parseFloat(document.getElementById('pC').value);
+    config.cannon.speed = parseFloat(document.getElementById('sC').value);
 
+    config.enemy.hpBase = parseFloat(document.getElementById('eHP').value);
+    config.enemy.hpScale = parseFloat(document.getElementById('eScale').value);
+    config.enemy.speed = parseFloat(document.getElementById('eSpeed').value);
+
+    document.getElementById('pL_ui').innerText = config.laser.cost + "g";
+    document.getElementById('pB_ui').innerText = config.boom.cost + "g";
+    document.getElementById('pC_ui').innerText = config.cannon.cost + "g";
+}
+
+function showDifficulty() { document.getElementById('map-select').style.display = 'none'; document.getElementById('diff-select').style.display = 'block'; }
 function startGame(diff) {
     if(diff === 'easy') { gold = 300; lives = 20; }
     else if(diff === 'hard') { gold = 100; lives = 5; }
@@ -145,7 +196,7 @@ class Hero {
         if(this.type === 'cannon') { ctx.fillStyle = 'black'; ctx.beginPath(); ctx.arc(this.x, this.y, 8, 0, Math.PI*2); ctx.fill(); }
         ctx.fillStyle = "white"; ctx.font = "bold 12px Arial"; ctx.fillText(this.lvl, this.x-4, this.y+5);
         if (selectedHero === this) {
-            ctx.strokeStyle = "rgba(255,255,255,0.2)"; ctx.beginPath(); ctx.arc(this.x, this.y, this.range, 0, Math.PI*2); ctx.stroke();
+            ctx.strokeStyle = "rgba(255,255,255,0.3)"; ctx.beginPath(); ctx.arc(this.x, this.y, this.range, 0, Math.PI*2); ctx.stroke();
         }
     }
     update() {
@@ -161,8 +212,10 @@ class Enemy {
     constructor(isBoss = false) {
         this.wp = 0; this.x = waypoints[0].x; this.y = waypoints[0].y; this.isBoss = isBoss;
         this.radius = isBoss ? 30 : 12;
-        this.hp = (isBoss ? 200 : 5) + (currentWave * (isBoss ? 60 : 3));
-        this.maxHp = this.hp; this.speed = isBoss ? 0.6 : (1.2 + Math.random() * 0.5);
+        // Bruker Dev Tool HP verdier
+        this.hp = (isBoss ? (config.enemy.hpBase * 40) : config.enemy.hpBase) + (currentWave * (isBoss ? (config.enemy.hpScale * 20) : config.enemy.hpScale));
+        this.maxHp = this.hp; 
+        this.speed = isBoss ? (config.enemy.speed * 0.5) : (config.enemy.speed + Math.random() * 0.4);
     }
     update() {
         let t = waypoints[this.wp + 1]; let d = Math.hypot(t.x-this.x, t.y-this.y);
@@ -178,61 +231,4 @@ class Enemy {
 class Projectile {
     constructor(x, y, target, parent) {
         this.x = x; this.y = y; this.target = target; this.parent = parent; this.active = true; this.type = parent.type;
-        if(this.type === 'boom') { this.angle = Math.atan2(target.y-y, target.x-x); this.t = 0; this.hits = []; }
-    }
-    update() {
-        if(this.type === 'laser' || this.type === 'cannon') {
-            if(!this.target || this.target.hp <= 0) { this.active = false; return; }
-            let d = Math.hypot(this.target.x-this.x, this.target.y-this.y);
-            if(d < 10) {
-                if(this.type === 'cannon') {
-                    enemies.forEach(e => { if(Math.hypot(e.x - this.x, e.y - this.y) < 100) e.hp -= this.parent.dmg; });
-                    ctx.fillStyle = 'rgba(255, 165, 0, 0.7)'; ctx.beginPath(); ctx.arc(this.x, this.y, 100, 0, Math.PI*2); ctx.fill();
-                } else this.target.hp -= this.parent.dmg;
-                this.active = false;
-            } else { this.x += (this.target.x-this.x)/d * 10 * gameSpeed; this.y += (this.target.y-this.y)/d * 10 * gameSpeed; }
-        } else {
-            this.t += 0.06 * gameSpeed; 
-            this.x = this.parent.x + Math.cos(this.angle) * Math.sin(this.t) * this.parent.range;
-            this.y = this.parent.y + Math.sin(this.angle) * Math.sin(this.t) * this.parent.range;
-            enemies.forEach(e => { if(Math.hypot(e.x-this.x, e.y-this.y) < 20 && !this.hits.includes(e)) { e.hp -= this.parent.dmg; this.hits.push(e); } });
-            if(this.t > Math.PI) this.active = false;
-        }
-    }
-    draw() { ctx.fillStyle = this.type === 'cannon' ? 'black' : (this.type === 'laser' ? 'yellow' : '#9b59b6'); ctx.beginPath(); ctx.arc(this.x, this.y, 5, 0, Math.PI*2); ctx.fill(); }
-}
-
-canvas.onmousedown = (e) => {
-    let r = canvas.getBoundingClientRect(); let x = e.clientX - r.left; let y = e.clientY - r.top;
-    let found = heroes.find(h => Math.hypot(h.x-x, h.y-y) < 25);
-    if(found) { selectHero(found); return; }
-    if (isTooCloseToPath(x, y)) return;
-    let cost = config[currentTool].cost;
-    if(gold >= cost) { heroes.push(new Hero(x, y, currentTool)); gold -= cost; updateUI(); }
-}
-
-function gameLoop() {
-    if(!isGameRunning) return; 
-    frame++; ctx.clearRect(0,0,800,600);
-    ctx.strokeStyle = '#95a5a6'; ctx.lineWidth = 40; ctx.lineJoin = 'round'; ctx.beginPath();
-    ctx.moveTo(waypoints[0].x, waypoints[0].y); waypoints.forEach(w => ctx.lineTo(w.x, w.y)); ctx.stroke();
-    if (waveActive) {
-        if (frame % Math.floor(60/gameSpeed) === 0 && spawnedInWave < enemiesInWave) { enemies.push(new Enemy(currentWave % 15 === 0 && spawnedInWave === enemiesInWave - 1)); spawnedInWave++; }
-        if (spawnedInWave >= enemiesInWave && enemies.length === 0) { waveActive = false; waveTimer = 180; gold += 50; updateUI(); }
-    } else if ((waveTimer -= gameSpeed) <= 0) { currentWave++; spawnedInWave = 0; waveActive = true; enemiesInWave = 5 + Math.floor(currentWave * 1.5); updateUI(); }
-    heroes.forEach(h => { h.update(); h.draw(); });
-    enemies.forEach((e, i) => { e.update(); e.draw(); if(e.hp <= 0) { enemies.splice(i, 1); gold += e.isBoss ? 100 : 15; updateUI(); } });
-    projectiles.forEach((p, i) => { p.update(); p.draw(); if(!p.active) projectiles.splice(i, 1); });
-    if(lives > 0) requestAnimationFrame(gameLoop); else { alert("Game Over!"); location.reload(); }
-}
-
-function updateUI() { document.getElementById('goldText').innerText = Math.floor(gold); document.getElementById('livesText').innerText = lives; }
-function setTool(t) { currentTool = t; deselectHero(); document.querySelectorAll('.buy-btn').forEach(b => b.classList.remove('active')); document.getElementById(t+'Btn').classList.add('active'); }
-function selectHero(h) { selectedHero = h; document.getElementById('buildMenu').style.display = 'none'; document.getElementById('upgradeMenu').style.display = 'block'; updateUpgradeText(); }
-function deselectHero() { selectedHero = null; document.getElementById('buildMenu').style.display = 'block'; document.getElementById('upgradeMenu').style.display = 'none'; }
-function updateUpgradeText() { if (selectedHero) { document.getElementById('heroStats').innerHTML = `Lvl: ${selectedHero.lvl}<br>Dmg: ${selectedHero.dmg.toFixed(1)}`; document.getElementById('costLabel').innerText = selectedHero.upgradeCost + "g"; } }
-function applyUpgrade() { if (selectedHero && gold >= selectedHero.upgradeCost) { gold -= selectedHero.upgradeCost; selectedHero.lvl++; selectedHero.dmg *= 1.4; selectedHero.upgradeCost = Math.floor(selectedHero.upgradeCost * 1.8); updateUpgradeText(); updateUI(); } }
-function goToMenu() { location.reload(); }
-</script>
-</body>
-</html>
+        if(this.type === 'boom') { this.angle = Math.atan2(target.y-y, target.x-x); this.
