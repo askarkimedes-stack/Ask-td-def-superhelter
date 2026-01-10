@@ -2,7 +2,7 @@
 <html lang="no">
 <head>
     <meta charset="UTF-8">
-    <title>Superhelt TD - Full Kontroll</title>
+    <title>Superhelt TD - Pro Versjon</title>
     <style>
         body { margin: 0; background: #1a1a1a; color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
         
@@ -12,34 +12,37 @@
             background: linear-gradient(135deg, #2c3e50, #000000);
             display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100;
         }
-        h1 { font-size: 60px; color: #f1c40f; text-transform: uppercase; margin-bottom: 10px; text-shadow: 4px 4px #000; }
-        .map-card { background: #34495e; padding: 20px; border-radius: 10px; text-align: center; border: 3px solid #27ae60; width: 150px; cursor: pointer; }
-        .btn-play { margin-top: 15px; padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        h1 { font-size: 60px; color: #f1c40f; text-transform: uppercase; text-shadow: 4px 4px #000; }
+        .map-card { background: #34495e; padding: 20px; border-radius: 10px; text-align: center; border: 3px solid #27ae60; cursor: pointer; }
 
         /* --- GAME UI --- */
         #game-ui { display: none; flex-direction: column; align-items: center; }
         #wrapper { display: flex; background: #2c3e50; border: 5px solid #34495e; border-radius: 10px; overflow: hidden; position: relative; }
         canvas { background: #27ae60; cursor: pointer; }
         #sidebar { width: 250px; padding: 20px; background: #34495e; display: flex; flex-direction: column; gap: 10px; }
+        
         .stats { font-size: 18px; font-weight: bold; color: #f1c40f; }
         .btn { width: 100%; padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 5px; }
         .buy-btn { background: #ecf0f1; color: #2c3e50; text-align: left; }
         .buy-btn.active { outline: 3px solid #f1c40f; background: #fff; }
+        
+        /* Speed Buttons */
+        .speed-container { display: flex; gap: 5px; margin-bottom: 10px; }
+        .speed-btn { flex: 1; background: #95a5a6; color: white; padding: 5px; font-size: 12px; border-radius: 3px; border: none; cursor: pointer; }
+        .speed-btn.active { background: #f1c40f; color: black; }
+
         .upgrade-btn { background: #2ecc71; color: white; }
         .cancel-btn { background: #e74c3c; color: white; }
         .quit-btn { background: #c0392b; color: white; margin-top: auto; }
-        small { display: block; font-size: 10px; color: #7f8c8d; }
 
-        /* --- UTVIDET DEV PANEL --- */
+        /* DEV PANEL */
         #dev-panel {
             margin-top: 15px; background: #34495e; padding: 15px; border-radius: 10px; border: 2px solid #f1c40f;
             display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; width: 1000px;
         }
         .dev-group { border: 1px solid #444; padding: 8px; border-radius: 5px; }
-        .dev-group h4 { margin: 0 0 5px 0; font-size: 14px; color: #f1c40f; }
-        .dev-input-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
-        .dev-input { width: 45px; padding: 3px; border-radius: 3px; border: none; text-align: center; font-size: 12px; }
-        label { font-size: 11px; color: #bdc3c7; }
+        .dev-input-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; font-size: 11px; }
+        .dev-input { width: 40px; text-align: center; }
     </style>
 </head>
 <body>
@@ -49,7 +52,7 @@
     <div class="map-card" onclick="startGame()">
         <div style="font-size: 40px;">🌲</div>
         <h3>Gressletten</h3>
-        <button class="btn-play">SPILL</button>
+        <p>Trykk for å starte</p>
     </div>
 </div>
 
@@ -58,14 +61,21 @@
         <canvas id="gameCanvas" width="800" height="600"></canvas>
         <div id="sidebar">
             <div class="stats">💰 <span id="goldText">150</span> | ❤️ <span id="livesText">10</span></div>
-            <div class="stats">⚔️ Wave: <span id="waveText">1</span></div>
+            
+            <div class="speed-container">
+                <button class="speed-btn active" id="sp1" onclick="setSpeed(1)">1x</button>
+                <button class="speed-btn" id="sp2" onclick="setSpeed(2)">2x ⚡</button>
+                <button class="speed-btn" id="sp4" onclick="setSpeed(4)">4x 🔥</button>
+            </div>
+
+            <div class="stats" style="font-size: 14px;">⚔️ Wave: <span id="waveText">1</span></div>
             <div id="buildMenu">
                 <button class="btn buy-btn active" id="laserBtn" onclick="setTool('laser')">LASER <span id="ui-laser-cost" style="float:right">50g</span></button>
                 <button class="btn buy-btn" id="boomBtn" onclick="setTool('boom')">BOOMERANG <span id="ui-boom-cost" style="float:right">120g</span></button>
                 <button class="btn buy-btn" id="cannonBtn" onclick="setTool('cannon')">KANON <span id="ui-cannon-cost" style="float:right">100g</span></button>
             </div>
             <div id="upgradeMenu" style="display:none;">
-                <h3 id="heroTitle" style="margin:0;">Oppgrader</h3>
+                <h3 id="heroTitle" style="margin:0; font-size: 16px;">Oppgrader</h3>
                 <p id="heroStats" style="font-size:12px;"></p>
                 <button class="btn upgrade-btn" onclick="applyUpgrade()">OPPGRADER <span id="costLabel"></span></button>
                 <button class="btn cancel-btn" onclick="deselectHero()">LUKK</button>
@@ -75,31 +85,25 @@
     </div>
 
     <div id="dev-panel">
-        <div class="dev-group">
-            <h4>🔴 LASER</h4>
+        <div class="dev-group"><h4>🔴 LASER</h4>
             <div class="dev-input-row"><label>Skade:</label><input type="number" id="dL" class="dev-input" value="3"></div>
             <div class="dev-input-row"><label>Range:</label><input type="number" id="rL" class="dev-input" value="130"></div>
             <div class="dev-input-row"><label>Fart:</label><input type="number" id="sL" class="dev-input" value="30"></div>
             <div class="dev-input-row"><label>Pris:</label><input type="number" id="pL" class="dev-input" value="50"></div>
         </div>
-        <div class="dev-group">
-            <h4>🟣 BOOMERANG</h4>
+        <div class="dev-group"><h4>🟣 BOOM</h4>
             <div class="dev-input-row"><label>Skade:</label><input type="number" id="dB" class="dev-input" value="4"></div>
             <div class="dev-input-row"><label>Range:</label><input type="number" id="rB" class="dev-input" value="120"></div>
             <div class="dev-input-row"><label>Fart:</label><input type="number" id="sB" class="dev-input" value="60"></div>
             <div class="dev-input-row"><label>Pris:</label><input type="number" id="pB" class="dev-input" value="120"></div>
         </div>
-        <div class="dev-group">
-            <h4>⚫ KANON</h4>
+        <div class="dev-group"><h4>⚫ KANON</h4>
             <div class="dev-input-row"><label>Skade:</label><input type="number" id="dC" class="dev-input" value="20"></div>
             <div class="dev-input-row"><label>Range:</label><input type="number" id="rC" class="dev-input" value="150"></div>
             <div class="dev-input-row"><label>Fart:</label><input type="number" id="sC" class="dev-input" value="100"></div>
             <div class="dev-input-row"><label>Pris:</label><input type="number" id="pC" class="dev-input" value="100"></div>
         </div>
-        <div style="display: flex; flex-direction: column; justify-content: center;">
-            <button class="btn" style="background: #f1c40f; color:black; margin:0;" onclick="updateAllStats()">OPPDATER ALT</button>
-            <p style="font-size: 10px; margin-top: 10px; color: #bdc3c7;">Fart: Lavere tall = skyter raskere.</p>
-        </div>
+        <button class="btn" style="background: #f1c40f; color:black; height: fit-content; align-self: center;" onclick="updateAllStats()">OPPDATER BALANSE</button>
     </div>
 </div>
 
@@ -113,41 +117,60 @@ let config = {
     cannon: { dmg: 20, range: 150, speed: 100, cost: 100 }
 };
 
-let isGameRunning = false, gold = 150, lives = 10, currentTool = 'laser', selectedHero = null;
+let isGameRunning = false, gameSpeed = 1;
+let gold = 150, lives = 10, currentTool = 'laser', selectedHero = null;
 let currentWave = 1, spawnedInWave = 0, enemiesInWave = 5, waveActive = true, waveTimer = 0, frame = 0;
 let heroes = [], enemies = [], projectiles = [];
+
 const waypoints = [{x:0, y:100}, {x:700, y:100}, {x:700, y:300}, {x:100, y:300}, {x:100, y:500}, {x:850, y:500}];
 
+// Funksjon for å sjekke om et punkt er for nær veien
+function isTooCloseToPath(x, y) {
+    const pathWidth = 50; // Bredden på veien vi sjekker mot
+    for (let i = 0; i < waypoints.length - 1; i++) {
+        let p1 = waypoints[i], p2 = waypoints[i+1];
+        
+        // Finn korteste avstand fra punkt (x,y) til linjestykket (p1, p2)
+        let A = x - p1.x, B = y - p1.y, C = p2.x - p1.x, D = p2.y - p1.y;
+        let dot = A * C + B * D;
+        let len_sq = C * C + D * D;
+        let param = (len_sq !== 0) ? dot / len_sq : -1;
+        
+        let xx, yy;
+        if (param < 0) { xx = p1.x; yy = p1.y; }
+        else if (param > 1) { xx = p2.x; yy = p2.y; }
+        else { xx = p1.x + param * C; yy = p1.y + param * D; }
+        
+        let dist = Math.hypot(x - xx, y - yy);
+        if (dist < pathWidth) return true;
+    }
+    return false;
+}
+
+function setSpeed(s) {
+    gameSpeed = s;
+    document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('sp' + s).classList.add('active');
+}
+
 function updateAllStats() {
-    // Laser
     config.laser.dmg = parseFloat(document.getElementById('dL').value);
     config.laser.range = parseFloat(document.getElementById('rL').value);
     config.laser.speed = parseFloat(document.getElementById('sL').value);
     config.laser.cost = parseFloat(document.getElementById('pL').value);
-    // Boom
     config.boom.dmg = parseFloat(document.getElementById('dB').value);
     config.boom.range = parseFloat(document.getElementById('rB').value);
     config.boom.speed = parseFloat(document.getElementById('sB').value);
     config.boom.cost = parseFloat(document.getElementById('pB').value);
-    // Cannon
     config.cannon.dmg = parseFloat(document.getElementById('dC').value);
     config.cannon.range = parseFloat(document.getElementById('rC').value);
     config.cannon.speed = parseFloat(document.getElementById('sC').value);
     config.cannon.cost = parseFloat(document.getElementById('pC').value);
 
-    // Oppdater UI i butikken
     document.getElementById('ui-laser-cost').innerText = config.laser.cost + "g";
     document.getElementById('ui-boom-cost').innerText = config.boom.cost + "g";
     document.getElementById('ui-cannon-cost').innerText = config.cannon.cost + "g";
-
-    // Oppdater eksisterende tårn på kartet
-    heroes.forEach(h => {
-        let cfg = config[h.type];
-        h.range = cfg.range;
-        h.speed = cfg.speed;
-        if(h.type === 'boom') h.dmg = cfg.dmg + (1.5 * (h.lvl - 1));
-        else h.dmg = cfg.dmg * Math.pow(1.4, h.lvl - 1);
-    });
+    alert("Balanse oppdatert!");
 }
 
 function startGame() {
@@ -201,7 +224,7 @@ class Hero {
         }
     }
     update() {
-        if(this.cd > 0) this.cd--;
+        if(this.cd > 0) this.cd -= gameSpeed;
         if(this.cd <= 0) {
             let target = enemies.find(e => Math.hypot(e.x-this.x, e.y-this.y) < this.range);
             if(target) { projectiles.push(new Projectile(this.x, this.y, target, this)); this.cd = this.speed; }
@@ -218,7 +241,10 @@ class Enemy {
     }
     update() {
         let t = waypoints[this.wp + 1]; let d = Math.hypot(t.x-this.x, t.y-this.y);
-        if(d < 5) this.wp++; else { this.x += (t.x-this.x)/d * this.speed; this.y += (t.y-this.y)/d * this.speed; }
+        if(d < 5) this.wp++; else { 
+            this.x += (t.x-this.x)/d * this.speed * gameSpeed; 
+            this.y += (t.y-this.y)/d * this.speed * gameSpeed; 
+        }
         if(this.wp >= waypoints.length-1) { lives--; enemies.splice(enemies.indexOf(this), 1); updateUI(); }
     }
     draw() {
@@ -239,12 +265,15 @@ class Projectile {
             if(d < 10) {
                 if(this.type === 'cannon') {
                     enemies.forEach(e => { if(Math.hypot(e.x - this.x, e.y - this.y) < 60) e.hp -= this.parent.dmg; });
-                    ctx.fillStyle = 'orange'; ctx.beginPath(); ctx.arc(this.x, this.y, 40, 0, Math.PI*2); ctx.fill();
                 } else this.target.hp -= this.parent.dmg;
                 this.active = false;
-            } else { this.x += (this.target.x-this.x)/d * 8; this.y += (this.target.y-this.y)/d * 8; }
+            } else { 
+                this.x += (this.target.x-this.x)/d * 10 * gameSpeed; 
+                this.y += (this.target.y-this.y)/d * 10 * gameSpeed; 
+            }
         } else {
-            this.t += 0.06; this.x = this.parent.x + Math.cos(this.angle) * Math.sin(this.t) * this.parent.range;
+            this.t += 0.06 * gameSpeed; 
+            this.x = this.parent.x + Math.cos(this.angle) * Math.sin(this.t) * this.parent.range;
             this.y = this.parent.y + Math.sin(this.angle) * Math.sin(this.t) * this.parent.range;
             enemies.forEach(e => { if(Math.hypot(e.x-this.x, e.y-this.y) < 20 && !this.hits.includes(e)) { e.hp -= this.parent.dmg; this.hits.push(e); } });
             if(this.t > Math.PI) this.active = false;
@@ -257,21 +286,40 @@ canvas.onmousedown = (e) => {
     let r = canvas.getBoundingClientRect(); let x = e.clientX - r.left; let y = e.clientY - r.top;
     let found = heroes.find(h => Math.hypot(h.x-x, h.y-y) < 25);
     if(found) { selectHero(found); return; }
+    
+    // Sjekk om vi prøver å bygge på veien
+    if (isTooCloseToPath(x, y)) {
+        return; // Ikke lov å bygge her
+    }
+
     let cost = config[currentTool].cost;
     if(gold >= cost) { heroes.push(new Hero(x, y, currentTool)); gold -= cost; updateUI(); }
 }
 
 function gameLoop() {
-    if(!isGameRunning) return; frame++; ctx.clearRect(0,0,800,600);
+    if(!isGameRunning) return; 
+    frame++; 
+    ctx.clearRect(0,0,800,600);
+    
+    // Tegn Vei
     ctx.strokeStyle = '#95a5a6'; ctx.lineWidth = 40; ctx.lineJoin = 'round'; ctx.beginPath();
     ctx.moveTo(waypoints[0].x, waypoints[0].y); waypoints.forEach(w => ctx.lineTo(w.x, w.y)); ctx.stroke();
+    
     if (waveActive) {
-        if (frame % 60 === 0 && spawnedInWave < enemiesInWave) { enemies.push(new Enemy(currentWave % 15 === 0 && spawnedInWave === enemiesInWave - 1)); spawnedInWave++; }
+        if (frame % Math.floor(60/gameSpeed) === 0 && spawnedInWave < enemiesInWave) { 
+            enemies.push(new Enemy(currentWave % 15 === 0 && spawnedInWave === enemiesInWave - 1)); 
+            spawnedInWave++; 
+        }
         if (spawnedInWave >= enemiesInWave && enemies.length === 0) { waveActive = false; waveTimer = 180; gold += 50; updateUI(); }
-    } else if (--waveTimer <= 0) { currentWave++; spawnedInWave = 0; waveActive = true; enemiesInWave = 5 + Math.floor(currentWave * 1.5); updateUI(); }
+    } else {
+        waveTimer -= gameSpeed;
+        if (waveTimer <= 0) { currentWave++; spawnedInWave = 0; waveActive = true; enemiesInWave = 5 + Math.floor(currentWave * 1.5); updateUI(); }
+    }
+    
     heroes.forEach(h => { h.update(); h.draw(); });
     enemies.forEach((e, i) => { e.update(); e.draw(); if(e.hp <= 0) { enemies.splice(i, 1); gold += e.isBoss ? 100 : 15; updateUI(); } });
     projectiles.forEach((p, i) => { p.update(); p.draw(); if(!p.active) projectiles.splice(i, 1); });
+    
     if(lives > 0) requestAnimationFrame(gameLoop); else { alert("Game Over!"); goToMenu(); }
 }
 </script>
