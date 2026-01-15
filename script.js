@@ -1,5 +1,3 @@
-
-
 /* Version: #3 */
 
 // === KONFIGURASJON & GLOBALE VARIABLER ===
