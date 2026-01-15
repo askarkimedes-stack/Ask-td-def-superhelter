@@ -1,4 +1,8 @@
-margin: 0;
+/* Version: #2 */
+
+/* === GENERAL RESET & BODY === */
+body {
+    margin: 0;
     padding: 0;
     background-color: #0f172a; /* Mørk blågrå bakgrunn */
     color: #e2e8f0;
@@ -327,3 +331,5 @@ canvas {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* Version: #2 */
