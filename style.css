@@ -1,0 +1,329 @@
+margin: 0;
+    padding: 0;
+    background-color: #0f172a; /* Mørk blågrå bakgrunn */
+    color: #e2e8f0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+    user-select: none;
+}
+
+h1, h2, h3, h4 {
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* === START SCREEN === */
+#start-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.95);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.start-content {
+    text-align: center;
+    background: #1e293b;
+    padding: 40px;
+    border-radius: 15px;
+    border: 2px solid #38bdf8;
+    box-shadow: 0 0 30px rgba(56, 189, 248, 0.3);
+}
+
+.start-content h1 {
+    font-size: 3rem;
+    color: #38bdf8;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
+
+.start-btn {
+    margin-top: 20px;
+    font-size: 1.5rem;
+    padding: 15px 40px;
+    background: linear-gradient(45deg, #f59e0b, #d97706);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.start-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
+}
+
+/* === GAME UI LAYOUT === */
+#game-ui {
+    display: none; /* Skjult til spillet starter */
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+#wrapper {
+    display: flex;
+    background: #1e293b;
+    border: 4px solid #334155;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+/* === CANVAS === */
+canvas {
+    background: #0f172a; /* Fallback farge, tegnes over av JS */
+    cursor: crosshair;
+    display: block;
+}
+
+/* === SIDEBAR === */
+#sidebar {
+    width: 260px;
+    padding: 20px;
+    background: #1e293b;
+    border-left: 2px solid #334155;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Stats Panel */
+.stats-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.stat-box {
+    background: #0f172a;
+    padding: 10px;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+    border: 1px solid #334155;
+}
+
+.stat-box span {
+    display: block;
+    margin-top: 2px;
+    color: #f1c40f;
+}
+
+/* Build Menu */
+.section-title {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #334155;
+    padding-bottom: 4px;
+}
+
+.btn {
+    width: 100%;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.buy-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    background: #334155;
+    color: #e2e8f0;
+    border: 2px solid transparent;
+}
+
+.buy-btn:hover {
+    background: #475569;
+}
+
+.buy-btn.active {
+    background: #1e293b;
+    border-color: #38bdf8;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.3) inset;
+    color: #38bdf8;
+}
+
+.t-cost {
+    color: #f1c40f;
+    font-size: 0.9em;
+}
+
+/* Upgrade Menu */
+#upgradeMenu {
+    background: #0f172a;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+#heroTitle {
+    color: #38bdf8;
+    margin-bottom: 5px;
+}
+
+#heroStats {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    margin-bottom: 15px;
+}
+
+.upgrade-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.action-btn {
+    padding: 10px;
+    color: white;
+}
+
+.action-btn.upgrade { background: #22c55e; }
+.action-btn.upgrade:hover { background: #16a34a; }
+
+.action-btn.close { background: #ef4444; }
+.action-btn.close:hover { background: #dc2626; }
+
+/* === EVOLUTION MODAL === */
+#evo-modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(15, 23, 42, 0.98);
+    padding: 25px;
+    border-radius: 15px;
+    border: 2px solid #f1c40f;
+    box-shadow: 0 0 50px rgba(241, 196, 15, 0.2);
+    display: none; /* Styres av JS */
+    flex-direction: column;
+    gap: 15px;
+    z-index: 200;
+    width: 320px;
+    text-align: center;
+}
+
+#evo-modal h2 {
+    color: #f1c40f;
+    font-size: 1.8rem;
+}
+
+.evo-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.evo-btn {
+    background: #334155;
+    color: white;
+    border: 1px solid #475569;
+    padding: 12px;
+    cursor: pointer;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+    text-align: left;
+}
+
+.evo-btn:hover {
+    background: #f1c40f;
+    color: #0f172a;
+    border-color: #f1c40f;
+    transform: translateX(5px);
+}
+
+.evo-btn .icon { font-size: 1.5rem; }
+.evo-btn .label { font-weight: bold; flex-grow: 1; }
+.evo-btn .desc { font-size: 0.8rem; opacity: 0.8; }
+
+/* === DEV PANEL === */
+#dev-panel {
+    width: 100%;
+    max-width: 1060px; /* Matcher wrapper bredde */
+    background: #1e293b;
+    padding: 15px 20px;
+    border-radius: 12px;
+    border: 1px solid #334155;
+}
+
+.dev-header {
+    font-weight: bold;
+    color: #94a3b8;
+    margin-bottom: 10px;
+    font-size: 0.8rem;
+}
+
+.dev-controls {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.dev-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #0f172a;
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid #334155;
+}
+
+.dev-group label {
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    font-weight: 600;
+}
+
+.dev-input {
+    width: 50px;
+    background: #334155;
+    border: none;
+    color: white;
+    padding: 4px;
+    border-radius: 3px;
+    text-align: center;
+}
+
+.dev-upd-btn {
+    background: #3b82f6;
+    color: white;
+    width: auto;
+    padding: 8px 16px;
+}
+.dev-upd-btn:hover { background: #2563eb; }
+
+/* Keyframes */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
