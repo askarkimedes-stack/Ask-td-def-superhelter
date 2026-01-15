@@ -660,4 +660,3 @@ function updateUI() {
     document.getElementById('livesText').innerText = lives;
     document.getElementById('waveText').innerText = currentWave;
 }
-```
