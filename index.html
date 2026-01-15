@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Superhelt TD - Boomerang Evolution</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Version: #1 -->
+    <!-- Version: #5 -->
 </head>
 <body>
 
@@ -13,7 +13,7 @@
     <div id="start-screen">
         <div class="start-content">
             <h1>SUPERHELT TD</h1>
-            <p>Forsvar basen med neonlys og strategi!</p>
+            <p>Forsvar basen med neonlys, strategi og økonomi!</p>
             <button class="btn start-btn" onclick="startGame()">START SPILL</button>
         </div>
     </div>
@@ -27,24 +27,10 @@
             
             <!-- Evolution Modal (Hidden by default) -->
             <div id="evo-modal">
-                <h2>EVOLUSJON!</h2>
-                <p>Velg Boomerangens spesialkraft:</p>
+                <h2>EVOS (Level 3)</h2>
+                <p>Velg spesialisering:</p>
                 <div class="evo-options">
-                    <button class="evo-btn" onclick="evolve('extra')">
-                        <span class="icon">双</span>
-                        <span class="label">Multi-Kast</span>
-                        <span class="desc">(+1 bomerang)</span>
-                    </button>
-                    <button class="evo-btn" onclick="evolve('bomb')">
-                        <span class="icon">💣</span>
-                        <span class="label">Eksplosiv</span>
-                        <span class="desc">(Skade i område)</span>
-                    </button>
-                    <button class="evo-btn" onclick="evolve('necro')">
-                        <span class="icon">💀</span>
-                        <span class="label">Nekromancer</span>
-                        <span class="desc">(Spøkelser fra enden)</span>
-                    </button>
+                    <!-- Knapper genereres dynamisk av JS -->
                 </div>
             </div>
 
@@ -55,6 +41,11 @@
                     <div class="stat-box">❤️ <span id="livesText">10</span></div>
                     <div class="stat-box">⚔️ <span id="waveText">1</span></div>
                 </div>
+
+                <!-- Speed Control -->
+                <button id="speedBtn" class="btn" style="background: #3b82f6; color: white; margin-bottom: 15px;" onclick="toggleSpeed()">
+                    ⏩ 1x SPEED
+                </button>
 
                 <div id="buildMenu">
                     <div class="section-title">BYGG TÅRN</div>
@@ -70,13 +61,17 @@
                         <span class="t-name">KANON</span>
                         <span class="t-cost">400g</span>
                     </button>
+                    <button class="btn buy-btn" id="bankBtn" onclick="setTool('bank')">
+                        <span class="t-name">BANK</span>
+                        <span class="t-cost">200g</span>
+                    </button>
                 </div>
 
                 <div id="upgradeMenu" style="display:none;">
                     <h3 id="heroTitle">Oppgrader</h3>
                     <p id="heroStats">Stats her</p>
                     <div class="upgrade-actions">
-                        <button id="upBtn" class="btn action-btn upgrade" onclick="applyUpgrade()">OPPGRADER (100g)</button>
+                        <button id="upBtn" class="btn action-btn upgrade" onclick="applyUpgrade()">OPPGRADER</button>
                         <button class="btn action-btn close" onclick="deselectHero()">LUKK</button>
                     </div>
                 </div>
@@ -97,7 +92,7 @@
                 </div>
                 <div class="dev-group">
                     <label>⚫ Kanon Dmg</label>
-                    <input type="number" id="dC" value="15" class="dev-input">
+                    <input type="number" id="dC" value="10" class="dev-input">
                 </div>
                 <div class="dev-group">
                     <label>👾 Start Wave</label>
@@ -109,10 +104,6 @@
     </div>
 
     <script src="script.js"></script>
-    <!-- Version: #1 -->
+    <!-- Version: #5 -->
 </body>
 </html>
-ThinkingThoughts
-Expand to view model thoughts
-
-chevron_right
