@@ -1,6 +1,3 @@
-
-
-```javascript
 /* Version: #9 */
 
 // === KONFIGURASJON & GLOBALE VARIABLER ===
